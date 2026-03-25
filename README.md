@@ -956,124 +956,12 @@ CREATE INDEX idx_links_from ON luma_links(from_url);
 # Verbose
 DEBUG=luma:* npm start
 
-# Nur Fehler
-LOG_LEVEL=error npm start
-```
-
-### Einzelne Module testen
-```bash
-# Test ranking.js
-node -e "require('./algorithmus/ranking').test()"
-
-# Test semantic AI
-node -e "require('./algorithmus/intelligence/semantic-intelligence').test()"
-```
-
----
 
 ## 📝 Lizenz & Kontakt
 
 **Autor**: Felix (Luma Development)
-**Status**: Beta / In Active Development
-**Lizenz**: (Zutreffendes auswählen)
 
----
 
-## 🗺️ Roadmap & Next Steps
-
-Siehe **LUMA_PROJEKT_ANALYSE.txt** für detaillierte Aufgaben-Priorisierung:
-
-### 🟢 STUFE 1 (Diese Woche)
-- [ ] Semantic-AI Embedding-Cache optimieren
-- [ ] Pogo-Tracking vollständig in Ranking integrieren
-
-### 🟡 STUFE 2 (Nächste Woche)
-- [ ] Redis Caching implementieren (3x schneller)
-- [ ] Multilingual Search Support erweitern
-- [ ] Mobile Search Optimization
-
-### 🟠 STUFE 3 (Nächste Wochen)
-- [ ] Personalized Rankings (user history)
-- [ ] Voice Search (Web Audio API)
-
-### 🔴 STUFE 4 (Später, nur bei Skalierung)
-- [ ] Elasticsearch Backend (>100k Pages)
-- [ ] Horizontal Scaling / Load Balancing
-- [ ] Real-time Indexing (RabbitMQ + Event Queue)
-
----
-
-## 📚 Dokumentation
-
-- 📄 [LUMA_PROJEKT_ANALYSE.txt](LUMA_PROJEKT_ANALYSE.txt) – Roadmap & Aufgaben-Priorisierung
-- 📄 [ALGORITHMUS_ERKLAERUNG.txt](ALGORITHMUS_ERKLAERUNG.txt) – Detaillierte Algorithmus-Erklärung
-- 💻 **Inline-Docstrings**: Jedes Modul hat detaillierte JSDoc-Kommentare
-
----
-
-**Viel Erfolg mit Luma! 🚀**
-
----
-
----
-
-## 📮 Support & Community
-
-- Issues: Bitte über GitHub Issues melden
-- Feedback: Gerne Vorschläge in den Discussions!
-- Code Review: Sehr willkommen — ich lerne noch!
-
----
-
-**Gebaut mit ❤️ und viel ☕ von Felix**
-
-├── luma-cleaner/
-│   └── cleaner-logic.js              # URL-Bereinigung und XSS-Schutz
-│
-├── modules/
-│   ├── community-moderation/
-│   │   ├── spam-detector.js          # Erkennt Spam-Muster in Nutzerinhalten
-│   │   └── insult-detector.js        # Erkennt direkte Beleidigungen
-│   └── synonyms/
-│       └── synonyms.json             # Umfangreiches Synonym-Wörterbuch
-│
-├── navigations_tabs/                 # UI-Komponenten für die Suchergebnisseite
-│   ├── alles.js                      # Haupt-Renderer für den "Alles"-Tab
-│   ├── bilder.js                     # Renderer für den "Bilder"-Tab
-│   ├── nachrichten.js                # Renderer für den "Nachrichten"-Tab
-│   ├── videos.js                     # Renderer für den "Videos"-Tab
-│   ├── community-lists.js            # UI-Logik für die Community-Listen
-│   ├── knowledge-panel.js            # UI für das Wikipedia/Wikidata-Panel
-│   ├── related-questions.js          # UI für "Ähnliche Fragen"
-│   └── trust-badge.js                # UI-Komponente für das Trust-Badge
-│
-├── public/
-│   ├── index.html                    # Startseite der Suchmaschine
-│   ├── results.html                  # Ergebnisseite
-│   └── weather-renderer-complete.js  # UI für die Wetter-Box
-│
-└── server.js                         # Haupt-Serverdatei, die Anfragen entgegennimmt
-```
-
----
-
-## 🚀 Setup & Start
-
-1.  **Abhängigkeiten installieren**:
-    ```bash
-    npm install
-    ```
-
-2.  **Umgebungsvariablen einrichten**:
-    Erstelle eine `.env`-Datei im Hauptverzeichnis und trage die erforderlichen Datenbank-Zugangsdaten ein (basierend auf `.env.example`).
-
-3.  **Datenbank-Migrationen ausführen**:
-    Führe die Skripte im `migrations`-Ordner aus, um die notwendigen Tabellen in deiner PostgreSQL-Datenbank zu erstellen.
-    ```bash
-    node migrations/create-ai-moderation-system.js
-    node migrations/create-semantic-blacklist.js
-    # ... weitere Migrationsskripte
-    ```
 
 4.  **Server starten**:
     ```bash
