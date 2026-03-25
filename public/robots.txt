@@ -1,0 +1,10 @@
+User-agent: *
+# Erlaube nur die Startseite
+Allow: /$
+Allow: /index.html
+
+# Verbiete alles andere
+Disallow: /
+
+# Zeige Suchmaschinen, wo die Sitemap liegt
+Sitemap: https://luma-suche.de/sitemap.xml

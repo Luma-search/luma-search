@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUMA Trust Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f0f11;
+            --surface: #1a1a1e;
+            --surface-hover: #242428;
+            --border: #35353a;
+            --text: #ededef;
+            --muted: #888898;
+            --accent: #7ba7f7;
+            --positive: #4caf50;
+            --neutral: #ff9800;
+            --negative: #f44336;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 30px 20px;
+            line-height: 1.6;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        header { margin-bottom: 40px; text-align: center; }
+        h1 { font-size: 2.5rem; margin-bottom: 10px; color: var(--accent); }
+        .disclaimer {
+            color: var(--muted);
+            font-size: 0.9rem;
+            background: rgba(123, 167, 247, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Grid */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .domain-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .domain-card.voted {
+            border-color: var(--accent);
+            background: rgba(123, 167, 247, 0.05);
+        }
+
+        .domain-card:hover {
+            border-color: var(--accent);
+            background: var(--surface-hover);
+        }
+
+        .domain-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            background: #151519;
+        }
+
+        .domain-name {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+            word-break: break-all;
+        }
+
+        .domain-url {
+            font-size: 0.82rem;
+            color: var(--muted);
+            word-break: break-all;
+        }
+
+        .domain-body { padding: 16px; }
+
+        /* Vote bar */
+        .vote-bar-wrap {
+            height: 6px;
+            border-radius: 4px;
+            background: var(--border);
+            overflow: hidden;
+            margin-bottom: 12px;
+            display: flex;
+        }
+
+        .vote-bar-segment { height: 100%; transition: width 0.4s ease; }
+        .vote-bar-segment.pos { background: var(--positive); }
+        .vote-bar-segment.neu { background: var(--neutral); }
+        .vote-bar-segment.neg { background: var(--negative); }
+
+        /* Vote counts */
+        .vote-counts {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+            font-size: 0.88rem;
+        }
+
+        .vote-count {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--muted);
+        }
+
+        .vote-count .num { font-weight: 600; }
+        .vote-count.pos .num { color: var(--positive); }
+        .vote-count.neu .num { color: var(--neutral); }
+        .vote-count.neg .num { color: var(--negative); }
+
+        /* Vote buttons */
+        .vote-buttons { display: flex; gap: 8px; }
+
+        .vote-btn {
+            flex: 1;
+            padding: 9px 6px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s, opacity 0.15s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            line-height: 1;
+        }
+
+        .vote-btn .icon { font-size: 1.3rem; }
+        .vote-btn:not(:disabled):hover { transform: translateY(-1px); }
+
+        .vote-btn.pos:not(:disabled):hover,
+        .vote-btn.pos.active {
+            background: rgba(76, 175, 80, 0.15);
+            border-color: var(--positive);
+            color: var(--positive);
+        }
+
+        .vote-btn.neu:not(:disabled):hover,
+        .vote-btn.neu.active {
+            background: rgba(255, 152, 0, 0.15);
+            border-color: var(--neutral);
+            color: var(--neutral);
+        }
+
+        .vote-btn.neg:not(:disabled):hover,
+        .vote-btn.neg.active {
+            background: rgba(244, 67, 54, 0.15);
+            border-color: var(--negative);
+            color: var(--negative);
+        }
+
+        .vote-btn:disabled { opacity: 0.45; cursor: default; transform: none; }
+
+        /* Loading-State auf dem angeklickten Button */
+        .vote-btn.sending {
+            opacity: 1 !important;
+            animation: pulse 0.8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.5; }
+        }
+
+        .voted-label {
+            font-size: 0.78rem;
+            color: var(--muted);
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        /* ── Toast Notification ── */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #2a2a2e;
+            color: var(--text);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            opacity: 0;
+            transition: opacity 0.25s, transform 0.25s;
+            pointer-events: none;
+            z-index: 9999;
+            white-space: nowrap;
+        }
+
+        #toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        #toast.success { border-color: var(--positive); color: var(--positive); }
+        #toast.error   { border-color: var(--negative); color: var(--negative); }
+
+        /* Misc */
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--muted);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 600px) {
+            body { padding: 20px 12px; }
+            h1 { font-size: 2rem; }
+            .domain-header, .domain-body { padding: 12px; }
+            .vote-buttons { gap: 6px; }
+            .vote-btn { padding: 10px 4px; font-size: 0.75rem; }
+            .results-grid { grid-template-columns: 1fr; }
+            header { margin-bottom: 24px; }
+            .disclaimer { font-size: 0.85rem; padding: 12px; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+        html {
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) var(--bg);
+        }
+    </style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- Login-Hinweis (erscheint wenn nicht angemeldet und auf Vote-Button geklickt) -->
+<div id="auth-banner" style="display:none; background:rgba(194,154,64,0.12); border-bottom:1px solid rgba(194,154,64,0.35); padding:11px 20px; text-align:center; font-size:13px; color:#ededef; position:sticky; top:0; z-index:100;">
+    Zum Reagieren bitte
+    <a href="/login.html" target="_blank" style="color:#C29A40;font-weight:600;text-decoration:none;">anmelden</a>
+    oder
+    <a href="/register.html" target="_blank" style="color:#C29A40;font-weight:600;text-decoration:none;">registrieren</a>
+    &nbsp;·&nbsp;
+    <span style="cursor:pointer;opacity:0.6;font-size:15px;" onclick="document.getElementById('auth-banner').style.display='none'">✕</span>
+</div>
+
+<div class="container">
+    <header>
+        <h1>Trust Center</h1>
+        <p class="disclaimer">
+            Hier siehst du alle von dir bewerteten Websites sowie die Ergebnisse deiner letzten Suche.
+            Deine Reaktionen helfen der Community, die Qualität von Suchergebnissen zu verbessern.
+        </p>
+        <button onclick="clearLocalData()" style="margin-top:12px;background:transparent;border:1px solid var(--border);color:var(--muted);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.8rem;transition:0.2s;" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">Verlauf leeren</button>
+    </header>
+
+    <div id="results-container">
+        <div class="loading"><div class="spinner"></div><br>Lade Websites...</div>
+    </div>
+</div>
+
+<script>
+    let lastStorageString = '';
+
+    /* ── Toast ── */
+    let toastTimer = null;
+    function showToast(msg, type = '') {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.className = 'show ' + type;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { el.className = ''; }, 2800);
+    }
+
+    /* ── localStorage: welche Domain wurde bereits bewertet ── */
+    function getVotedDomains() {
+        try { return JSON.parse(localStorage.getItem('luma_voted_domains') || '{}'); }
+        catch { return {}; }
+    }
+
+    function markVoted(domain, type) {
+        const voted = getVotedDomains();
+        voted[domain] = type;
+        localStorage.setItem('luma_voted_domains', JSON.stringify(voted));
+    }
+
+    function clearVote(domain) {
+        const voted = getVotedDomains();
+        delete voted[domain];
+        localStorage.setItem('luma_voted_domains', JSON.stringify(voted));
+    }
+
+    function hasVoted(domain) {
+        return getVotedDomains()[domain] || null;
+    }
+
+    /* ── Daten laden ── */
+    async function loadResultsFromStorage(force = false) {
+        const container = document.getElementById('results-container');
+
+        try {
+            // Lade User-Votes aus der Datenbank statt aus localStorage
+            const votesRes = await fetch('/api/votes/my-votes');
+            if (!votesRes.ok) {
+                container.innerHTML = '<div class="no-results"><p>Nicht eingeloggt</p></div>';
+                return;
+            }
+            
+            const { items } = await votesRes.json();
+
+            if (!items || items.length === 0) {
+                container.innerHTML = '<div class="no-results"><p>Noch keine bewerteten Domains.</p><p style="color:var(--muted);font-size:0.9rem;margin-top:16px;">Deine bewerteten Domains aus den Suchergebnissen erscheinen hier.</p></div>';
+                lastStorageString = '';
+                return;
+            }
+
+            // Sortiere: Zuerst die Domains auf die User abgestimmt hat (aus localStorage)
+            const votedDomainsObject = getVotedDomains();
+            items.sort((a, b) => {
+                const aVoted = !!votedDomainsObject[a.domain];
+                const bVoted = !!votedDomainsObject[b.domain];
+                if (aVoted && !bVoted) return -1;
+                if (!aVoted && bVoted) return 1;
+                return a.domain.localeCompare(b.domain);
+            });
+
+            renderResults(items);
+        } catch (e) {
+            console.error('Fehler:', e);
+            container.innerHTML = '<div class="no-results">❌ Fehler beim Laden</div>';
+        }
+    }
+
+    function clearLocalData() {
+        localStorage.removeItem('luma_current_results');
+        localStorage.removeItem('luma_voted_domains');
+        loadResultsFromStorage(true);
+        showToast('Verlauf geleert', 'success');
+    }
+
+    /* ── Render ── */
+    function renderResults(results) {
+        const container = document.getElementById('results-container');
+        let html = '<div class="results-grid">';
+
+        results.forEach((item, index) => {
+            // Stelle sicher, dass item alle erforderlichen Vote-Felder hat
+            const { approvalRating = null, totalVotes = 0 } = item || {};
+            const voted = hasVoted(item.domain);
+
+            let scoreHtml = '<div style="font-size:0.8rem;color:var(--muted)">Neu</div>';
+            if (approvalRating !== null) {
+                let color = 'var(--neutral)';
+                if (approvalRating >= 70) color = 'var(--positive)';
+                else if (approvalRating < 40) color = 'var(--negative)';
+                scoreHtml = `<div style="font-weight:700;font-size:1.1rem;color:${color}">${approvalRating}%</div><div style="font-size:0.75rem;color:var(--muted)">${totalVotes} Votes</div>`;
+            }
+
+            const faviconUrl = item.domain
+                ? `https://www.google.com/s2/favicons?sz=32&domain=${encodeURIComponent(item.domain)}`
+                : '';
+
+            html += `
+            <div class="domain-card ${voted ? 'voted' : ''}" data-domain="${item.domain}">
+                <div class="domain-header" style="display:flex;align-items:center;gap:12px;">
+                    ${faviconUrl ? `<img src="${faviconUrl}" style="width:24px;height:24px;border-radius:4px;flex-shrink:0;" alt="" onerror="this.style.display='none'">` : ''}
+                    <div style="min-width:0;flex:1;">
+                        <div class="domain-name">${item.domain}</div>
+                        <a class="domain-url" href="https://${item.domain}" target="_blank" rel="noopener noreferrer">https://${item.domain}</a>
+                    </div>
+                    <div style="text-align:right;">${scoreHtml}</div>
+                </div>
+                <div class="domain-body">
+                    <div class="vote-buttons">
+                        <button class="vote-btn pos ${voted === 'positive' ? 'active' : ''}"
+                            data-type="positive" onclick="submitVote(this)" title="Gefällt mir">
+                            <span>👍</span> Positiv
+                        </button>
+                        <button class="vote-btn neu ${voted === 'neutral' ? 'active' : ''}"
+                            data-type="neutral" onclick="submitVote(this)" title="Neutral">
+                            <span>😐</span> Neutral
+                        </button>
+                        <button class="vote-btn neg ${voted === 'negative' ? 'active' : ''}"
+                            data-type="negative" onclick="submitVote(this)" title="Gefällt mir nicht">
+                            <span>👎</span> Negativ
+                        </button>
+                    </div>
+                </div>
+            </div>
+            `;
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    function labelOf(type) {
+        return { positive: '👍 Positiv', neutral: '😐 Neutral', negative: '👎 Negativ' }[type] || type;
+    }
+    function iconOf(type) {
+        return { positive: '👍', neutral: '😐', negative: '👎' }[type] || '';
+    }
+
+    /* ── Auth-Check (einmalig gecacht) ── */
+    let _authStatus = null;
+    async function checkLoggedIn() {
+        if (_authStatus !== null) return _authStatus;
+        try {
+            const r = await fetch('/api/auth/me');
+            const d = await r.json();
+            _authStatus = d.loggedIn;
+        } catch { _authStatus = false; }
+        return _authStatus;
+    }
+
+    /* ── Vote abschicken ── */
+    async function submitVote(btn) {
+        const wrap   = btn.closest('.domain-card');
+        const domain = wrap ? wrap.getAttribute('data-domain') : null;
+        const type   = btn.getAttribute('data-type');
+
+        if (!domain || !type) return;
+
+        // Login prüfen — nicht angemeldet = Banner zeigen
+        const loggedIn = await checkLoggedIn();
+        if (!loggedIn) {
+            const banner = document.getElementById('auth-banner');
+            if (banner) banner.style.display = 'block';
+            return;
+        }
+
+        // Sofortiges visuelles Feedback
+        const btns = wrap.querySelectorAll('.vote-btn');
+        btns.forEach(b => { b.disabled = true; b.classList.remove('sending'); });
+        btn.classList.add('sending');
+
+        try {
+            const res  = await fetch('/api/votes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ domain, type })
+            });
+
+            if (!res.ok) {
+                throw new Error(`Server antwortet mit ${res.status}`);
+            }
+
+            const data = await res.json();
+
+            if (data.success) {
+                if (data.action === 'removed') {
+                    clearVote(domain);
+                    showToast(`Reaktion entfernt`, 'success');
+                } else {
+                    markVoted(domain, type);
+                    showToast(`${labelOf(type)} gespeichert!`, 'success');
+                }
+                loadResultsFromStorage(true); // Force reload to show changes
+            } else {
+                throw new Error(data.error || 'Unbekannter Fehler');
+            }
+        } catch (e) {
+            console.error('Vote-Fehler:', e);
+            btn.classList.remove('sending');
+            btns.forEach(b => { b.disabled = false; });
+            showToast('Fehler: ' + e.message, 'error');
+        }
+    }
+
+    /* ── Init ── */
+    document.addEventListener('DOMContentLoaded', () => {
+        loadResultsFromStorage();
+        // Kein setInterval mehr — einmaliges Laden reicht.
+    });
+</script>
+
+</body>
+</html>

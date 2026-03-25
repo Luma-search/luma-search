@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luma Ergebnisse</title>
+
+    <!-- Service Worker Registration (PWA) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js');
+            });
+        }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="search" type="application/opensearchdescription+xml" title="Luma" href="/opensearch.xml">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="/css/results.css">
+
+    <!-- Theme sofort setzen – verhindert weißen Flash beim Laden -->
+    <script>
+        (function() {
+            var t = localStorage.getItem('luma_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+</head>
+<body>
+
+    <header>
+        <div class="header-row">
+            <a href="/" class="logo">L<span class="u">u</span>ma</a>
+
+            <div class="header-search">
+                <input type="text" id="searchInput" spellcheck="false" placeholder="Luma fragen" autocomplete="off">
+            </div>
+            <div class="hamburger-wrap">
+                <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menü öffnen">
+                    <span class="line"></span>
+                    <span class="line"></span>
+                    <span class="line"></span>
+                </button>
+                <div class="settings-dropdown" id="settingsDropdown">
+                    <div class="dropdown-header">🎯 Tools</div>
+
+                    <a class="dropdown-item" href="#" onclick="openPaywallModal(); return false;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                        Paywall Radar
+                    </a>
+
+                    <a class="dropdown-item" href="#" onclick="goToHub(); return false;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                        Lösung finden
+                    </a>
+
+                    <a class="dropdown-item" href="#" onclick="openCollectionsModal(); return false;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                        Sammlungen
+                    </a>
+
+                    <div style="border-top: 1px solid var(--border); margin: 8px 0;"></div>
+                    <div class="dropdown-header">⚙️ Einstellungen</div>
+
+                    <a class="dropdown-item" href="/setting">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+                        Einstellungen öffnen
+                    </a>
+
+                    <div style="border-top: 1px solid var(--border); margin: 8px 0;"></div>
+
+                    <a class="dropdown-item" href="#" onclick="openTrustModal(); return false;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        <span>Trust Center</span>
+                    </a>
+
+                    <!-- Auth-bereich (wird per JS befüllt) -->
+                    <div id="dropdown-auth-section">
+                        <div style="border-top: 1px solid var(--border); margin: 8px 0;"></div>
+                        <div id="dropdown-auth-links">
+                            <!-- wird per JS gesetzt -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs-bar">
+            <div class="tabs-inner">
+                <button class="tab-btn" data-type="all">Alles</button>
+                <button class="tab-btn" data-type="images">Bilder</button>
+                <button class="tab-btn" data-type="news">Nachrichten</button>
+                <button class="tab-btn" data-type="videos">Videos</button>
+                <button class="tab-btn" data-type="questions">Fragen</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-wrap">
+        <div id="instant-answers-container"></div>
+        <div id="weather-container"></div>
+        <div id="results">
+            <div class="loading">
+                <div class="spinner"></div>
+                Suche läuft…
+            </div>
+        </div>
+        <div id="pagination-container"></div>
+        <div id="community-lists-container"></div>
+    </div>
+
+    <footer>
+        <span>©Luma Suche</span>
+        <div class="footer-links">
+            <a href="/blocked.html">Blockiert</a>
+            <a href="/terms.html">Nutzung</a>
+            <a href="/datenschutz.html">Datenschutz</a>
+            <a href="/setting">Einstellungen</a>
+            <a href="/about.html">Über Luma</a>
+        </div>
+    </footer>
+
+    <!-- Toast -->
+    <div id="luma-toast"></div>
+
+    <!-- Kontext-Menü für Suchergebnisse -->
+    <div id="result-ctx-menu">
+        <button class="ctx-item" id="ctx-warum-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Warum steht das hier?
+        </button>
+        <button class="ctx-item" id="ctx-trust-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Trust Details
+        </button>
+        <button class="ctx-item" id="ctx-paywall-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            Paywall melden
+        </button>
+        <div class="ctx-sep"></div>
+        <button class="ctx-item danger" id="ctx-block-btn">
+            🚫 URL blockieren
+        </button>
+    </div>
+
+    <!-- Warum-Modal -->
+    <style>
+        /* Alles näher an die Navigation rücken */
+        .main-wrap { padding-top: 0px !important; }
+        
+        #warum-modal > div::-webkit-scrollbar { width: 4px; }
+        #warum-modal > div::-webkit-scrollbar-track { background: transparent; }
+        #warum-modal > div::-webkit-scrollbar-thumb { background: #3c4043; border-radius: 2px; }
+        #warum-modal > div::-webkit-scrollbar-thumb:hover { background: #5f6368; }
+    </style>
+    <div id="warum-modal" style="display:none;position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);" onclick="if(event.target===this)this.style.display='none'">
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e1e22;border:1px solid #3c4043;border-radius:16px;padding:28px;width:min(480px,90vw);max-height:90vh;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#3c4043 transparent;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <div style="font-size:16px;font-weight:600;color:#e8eaed;">🔍 Warum steht das hier oben?</div>
+                <button onclick="document.getElementById('warum-modal').style.display='none'" style="background:none;border:none;color:#9aa0a6;font-size:20px;cursor:pointer;padding:0 4px;">×</button>
+            </div>
+            <div id="warum-url" style="font-size:11px;color:#5f6368;margin-bottom:20px;word-break:break-all;"></div>
+
+            <!-- Ranking Position -->
+            <div style="margin-bottom:16px;padding:12px 16px;background:#26272b;border-radius:10px;display:flex;align-items:center;gap:12px;">
+                <div style="font-size:24px;font-weight:700;color:#8ab4f8;min-width:40px;text-align:center;" id="warum-pos">1</div>
+                <div>
+                    <div style="font-size:13px;color:#e8eaed;font-weight:500;">Position in den Ergebnissen</div>
+                    <div style="font-size:11px;color:#9aa0a6;margin-top:2px;">Basierend auf Trust, Relevanz und Qualität</div>
+                </div>
+            </div>
+
+            <!-- Score-Balken -->
+            <div id="warum-scores" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;"></div>
+
+            <!-- Quellen-Karte -->
+            <div style="border-top:1px solid #3c4043;padding-top:16px;margin-top:4px;">
+                <div style="font-size:13px;font-weight:600;color:#e8eaed;margin-bottom:12px;">🗺️ Quellen-Karte dieser Suche</div>
+                <div id="warum-quellen" style="font-size:12px;color:#9aa0a6;">Wird geladen…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Similarity Popup -->
+    <div id="sim-popup-global" class="sim-popup"></div>
+
+    <!-- Trust Modal -->
+    <div id="trustModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeTrustModal()">×</button>
+            <iframe src="/trust.html" style="width:100%; height:100%; border:none;"></iframe>
+        </div>
+    </div>
+
+    <!-- Paywall Radar Modal -->
+    <div id="paywallModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px; height: 600px; max-height: 90vh;">
+            <button class="close-modal" onclick="closePaywallModal()">×</button>
+            <iframe src="/paywall-radar.html" style="width:100%; height:100%; border:none;"></iframe>
+        </div>
+    </div>
+
+    <!-- Collection Manager Modal -->
+    <div id="collectionsModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 1000px; height: 90vh;">
+            <button class="close-modal" onclick="closeCollectionsModal()">×</button>
+            <iframe style="width:100%; height:100%; border:none;"></iframe>
+        </div>
+    </div>
+
+    <!-- Password Security Modules -->
+    <script defer src="/modules/passwort/PasswordStrengthAnalyzer.js"></script>
+    <script defer src="/modules/passwort/SecurePasswordGenerator.js"></script>
+
+    <!-- Ausgelagerte Scripts -->
+    <script src="/js/pogo-tracking.js"></script>
+    <script src="/js/context-menu.js"></script>
+    <script>
+    // ── Warum-Button im Kontextmenü ──────────────────────────────────
+    // Wird nach context-menu.js geladen damit openResultMenu bereits definiert ist
+    document.addEventListener('DOMContentLoaded', function() {
+        // lastResults global merken damit die Quellen-Karte darauf zugreifen kann
+        window._lumaLastResults = [];
+
+        // Original renderAlles patchen um lastResults zu speichern
+        // (wird von results.html module gesetzt)
+        const warumBtn = document.getElementById('ctx-warum-btn');
+        if (warumBtn) {
+            warumBtn.addEventListener('click', function() {
+                const menu = document.getElementById('result-ctx-menu');
+                const btn  = menu?._srcBtn;
+                if (!btn) return;
+                document.getElementById('result-ctx-menu').style.display = 'none';
+                window.openWarumModal(btn, window._lumaLastResults || []);
+            });
+        }
+    });
+    </script>
+    <script src="/js/modals.js"></script>
+    <script src="/js/voting.js"></script>
+    <script src="/js/dropdown-auth.js"></script>
+    <script src="/js/feature-toggles.js"></script>
+    <script src="/js/instant-answers.js"></script>
+
+    <!-- Haupt-Modul (Search Core + Instant Answers) -->
+    <script type="module">
+        import { renderAlles }       from '/navigations_tabs/alles.js';
+        import { renderBilder }      from '/navigations_tabs/bilder.js';
+        import { renderNachrichten } from '/navigations_tabs/nachrichten.js';
+        import { renderVideos }      from '/navigations_tabs/videos.js';
+        import { renderFragen }      from '/navigations_tabs/fragen.js';
+
+        const WEATHER_KW = ['wetter','temperatur','regen','schnee','wind','sonne','wolken','gewitter','hagel','vorhersage','prognose','forecast'];
+        function isWeatherQuery(q) { const l = q.toLowerCase(); return WEATHER_KW.some(kw => l.includes(kw)); }
+
+        const resultsDiv          = document.getElementById('results');
+        const weatherContainer    = document.getElementById('weather-container');
+        const paginationContainer = document.getElementById('pagination-container');
+        const searchInput         = document.getElementById('searchInput');
+        const tabsInner           = document.querySelector('.tabs-inner');
+        let currentQuery          = '';
+
+        const urlParams  = new URLSearchParams(window.location.search);
+        currentQuery     = urlParams.get('q') || '';
+        const currentPage = parseInt(urlParams.get('page') || '1', 10);
+        const currentTab  = urlParams.get('tab') || 'all';
+
+        // Instant Answers — ausgelagert in /js/instant-answers.js
+        // (wird als normales Script geladen, Funktion global verfügbar)
+
+        // ── Weather Box ──────────────────────────────────────────────
+        async function renderWeatherBox(query) {
+            const weatherContainer = document.getElementById('weather-container');
+            if (!weatherContainer) return;
+            weatherContainer.style.display = 'block';
+            try {
+                const res = await fetch('/weather-widget.html');
+                if (!res.ok) { weatherContainer.style.display = 'none'; return; }
+                let html = await res.text();
+                const base   = `<base href="${window.location.origin}/" />`;
+                const script = `<script>window.weatherQuery = ${JSON.stringify(query)};<\/script>`;
+                html = html.replace('<head>', `<head>${base}${script}`);
+                const iframe = document.createElement('iframe');
+                iframe.style.cssText = 'width:100%;border:none;border-radius:12px;overflow:hidden;';
+                iframe.setAttribute('scrolling', 'no');
+                iframe.srcdoc = html;
+                iframe.onload = () => {
+                    try { iframe.style.height = iframe.contentDocument.body.scrollHeight + 'px'; } catch {}
+                };
+                weatherContainer.innerHTML = '';
+                weatherContainer.appendChild(iframe);
+            } catch { weatherContainer.style.display = 'none'; }
+        }
+
+        // ── Initial Load ─────────────────────────────────────────────
+        async function initialLoad() {
+            if (!currentQuery) return;
+            searchInput.value = currentQuery;
+            document.title    = `${currentQuery} – Luma`;
+
+            if (isWeatherQuery(currentQuery)) {
+                renderWeatherBox(currentQuery);
+            }
+
+            try {
+                const t0  = performance.now();
+                const res = await fetch(`/search?q=${encodeURIComponent(currentQuery)}&tab=${currentTab}&page=${currentPage}`);
+                const data = await res.json();
+                const lastResults = data.results;
+                window._lumaLastResults = lastResults || []; // für Warum-Modal Quellen-Karte
+                const elapsed = ((performance.now() - t0) / 1000).toFixed(2);
+
+                if (data.instantAnswers?.length) {
+                    renderInstantAnswers(data.instantAnswers);
+                }
+
+                let didYouMean = null;
+                if (data.didYouMean?.topSuggestion) {
+                    const suggestion = data.didYouMean.topSuggestion;
+                    const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                    if (suggestion !== currentQuery) {
+                        didYouMean = data.didYouMean;
+                    }
+                }
+
+                if (currentTab === 'all') {
+                    await renderAlles(lastResults, resultsDiv, currentQuery, didYouMean, data.relatedSearches || []);
+                } else if (currentTab === 'images') {
+                    await renderBilder(lastResults, resultsDiv, currentQuery);
+                } else if (currentTab === 'news') {
+                    await renderNachrichten(lastResults, resultsDiv, currentQuery);
+                } else if (currentTab === 'videos') {
+                    await renderVideos(lastResults, resultsDiv, currentQuery);
+                } else if (currentTab === 'questions') {
+                    await renderFragen(lastResults, resultsDiv, currentQuery);
+                }
+
+                if (data.totalItems > 10) {
+                    renderPagination(data.totalItems, currentPage, 10);
+                }
+
+                // URLs für trust.html speichern
+                if (lastResults?.length) {
+                    localStorage.setItem('luma_current_results', JSON.stringify({
+                        query: currentQuery,
+                        urls: lastResults.slice(0, 10).map(r => ({ url: r.url, title: r.title, domain: r.domain || '' })),
+                        timestamp: Date.now()
+                    }));
+                }
+
+            } catch (e) {
+                resultsDiv.innerHTML = `<p style="color:#bdc1c6;margin-top:20px;">Fehler beim Laden der Ergebnisse.</p>`;
+                console.error(e);
+            }
+        }
+
+        // ── Pagination ───────────────────────────────────────────────
+        function renderPagination(totalItems, currentPage, itemsPerPage) {
+            if (!paginationContainer) return;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            if (totalPages <= 1) return;
+
+            const prevHref = currentPage > 1 ? `?q=${encodeURIComponent(currentQuery)}&tab=${currentTab}&page=${currentPage - 1}` : null;
+            const nextHref = currentPage < totalPages ? `?q=${encodeURIComponent(currentQuery)}&tab=${currentTab}&page=${currentPage + 1}` : null;
+            const progress = Math.round((currentPage / totalPages) * 100);
+
+            paginationContainer.innerHTML = `
+                <div style="display:flex;align-items:center;justify-content:center;gap:24px;margin:32px 0 8px;">
+                    ${prevHref
+                        ? `<a href="${prevHref}" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#303134;color:#e8eaed;text-decoration:none;font-size:18px;transition:background 0.15s;" onmouseover="this.style.background='#3c4043'" onmouseout="this.style.background='#303134'">&#8249;</a>`
+                        : `<span style="width:36px;height:36px;border-radius:50%;background:#1e1e22;color:#444;display:flex;align-items:center;justify-content:center;font-size:18px;">&#8249;</span>`
+                    }
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+                        <div style="width:120px;height:3px;background:#303134;border-radius:2px;overflow:hidden;">
+                            <div style="width:${progress}%;height:100%;background:#8ab4f8;border-radius:2px;transition:width 0.3s;"></div>
+                        </div>
+                        <span style="font-size:11px;color:#5f6368;">${currentPage} / ${totalPages}</span>
+                    </div>
+                    ${nextHref
+                        ? `<a href="${nextHref}" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#303134;color:#e8eaed;text-decoration:none;font-size:18px;transition:background 0.15s;" onmouseover="this.style.background='#3c4043'" onmouseout="this.style.background='#303134'">&#8250;</a>`
+                        : `<span style="width:36px;height:36px;border-radius:50%;background:#1e1e22;color:#444;display:flex;align-items:center;justify-content:center;font-size:18px;">&#8250;</span>`
+                    }
+                </div>`;
+        }
+
+        // ── Tab Clicks ───────────────────────────────────────────────
+        tabsInner.addEventListener('click', e => {
+            const btn = e.target.closest('.tab-btn');
+            if (!btn) return;
+            const type = btn.dataset.type;
+            tabsInner.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const q = searchInput.value.trim();
+            if (q) window.location.href = `?q=${encodeURIComponent(q)}&tab=${type}&page=1`;
+        });
+
+        // ── Hamburger ────────────────────────────────────────────────
+        const hamburgerBtn     = document.getElementById('hamburgerBtn');
+        const settingsDropdown = document.getElementById('settingsDropdown');
+
+        hamburgerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = settingsDropdown.classList.toggle('open');
+            hamburgerBtn.classList.toggle('is-active', isOpen);
+        });
+
+        document.addEventListener('click', () => {
+            settingsDropdown.classList.remove('open');
+            hamburgerBtn.classList.remove('is-active');
+        });
+
+        // ── Suchfeld Enter-Handler ───────────────────────────────────
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const q = searchInput.value.trim();
+                if (!q) return;
+                // Immer aktuellen Tab aus der URL lesen
+                const tab = new URLSearchParams(window.location.search).get('tab') || 'all';
+                window.location.href = `?q=${encodeURIComponent(q)}&tab=${tab}&page=1`;
+            }
+        });
+
+        // Global: Similarity-Popup togglen (wie openResultMenu)
+        // Similarity Popup — globales Div wie ctx-menu
+        window.toggleSimPopup = function(btn) {
+            var gp = document.getElementById('sim-popup-global');
+            if (!gp) return;
+
+            // Schon offen vom selben Button → schließen
+            if (gp._srcBtn === btn) {
+                gp.style.display = 'none';
+                gp._srcBtn = null;
+                return;
+            }
+
+            // Inhalt aus Daten-Div kopieren
+            var dataDiv = document.getElementById(btn.getAttribute('data-popup-id'));
+            if (!dataDiv) return;
+            gp.innerHTML = dataDiv.innerHTML;
+
+            // Positionieren & anzeigen (absolute mit scrollY damit es beim Scrollen mitwandert)
+            var rect = btn.getBoundingClientRect();
+            gp.style.position = 'absolute';
+            gp.style.top  = (rect.bottom + window.scrollY + 6) + 'px';
+            gp.style.left = Math.min(rect.left + window.scrollX, window.innerWidth - 320) + 'px';
+            gp.style.display = 'block';
+            gp._srcBtn = btn;
+        };
+
+        // Schließen bei Klick außerhalb — stopPropagation im Button verhindert sofortiges Schließen
+        document.addEventListener('click', function(e) {
+            var gp = document.getElementById('sim-popup-global');
+            if (!gp) return;
+            if (!e.target.closest('[data-popup-id]') && !e.target.closest('#sim-popup-global')) {
+                gp.style.display = 'none';
+                gp._srcBtn = null;
+            }
+        });
+
+        // ── Warum-Modal ──────────────────────────────────────────────
+        // Wird von context-menu.js befüllt via window.openWarumModal(btn, allResults)
+        window.openWarumModal = function(btn, allResults) {
+            const modal    = document.getElementById('warum-modal');
+            const urlEl    = document.getElementById('warum-url');
+            const posEl    = document.getElementById('warum-pos');
+            const scoresEl = document.getElementById('warum-scores');
+            const quellenEl= document.getElementById('warum-quellen');
+            if (!modal) return;
+
+            const url      = btn.dataset.url || '';
+            const pos      = btn.dataset.rankPos || '?';
+            const trust    = parseInt(btn.dataset.trust);
+            const spam     = parseInt(btn.dataset.spam);
+            const trend    = parseInt(btn.dataset.trend) || 0;
+            const approvalRating = btn.dataset.approvalRating ? parseInt(btn.dataset.approvalRating) : null;
+            const totalVotes = parseInt(btn.dataset.totalVotes) || 0;
+            const trending = btn.dataset.isTrending === 'true';
+
+            urlEl.textContent = url;
+            posEl.textContent = '#' + pos;
+
+            // ── Trust-Erklärung (das Herzstück) ──────────────────────
+            const trustColor = trust >= 70 ? '#4caf50' : trust >= 40 ? '#ff9800' : '#f44336';
+            const trustLabel = trust >= 70 ? 'Vertrauenswürdig'
+                             : trust >= 40 ? 'Mittleres Vertrauen'
+                             : 'Niedriges Vertrauen';
+            const trustDesc  = trust >= 70
+                ? 'Diese Quelle hat eine hohe Vertrauenswürdigkeit — gutes Impressum, etablierte Domain, wenig Werbung.'
+                : trust >= 40
+                ? 'Diese Quelle hat ein mittleres Vertrauen — prüfe die Informationen mit anderen Quellen.'
+                : 'Diese Quelle hat ein niedriges Vertrauen — sei kritisch mit den Inhalten.';
+
+            // Trust-Balken mit Erklärung
+            let html = '';
+
+            if (!isNaN(trust)) {
+                const pct = Math.min(100, Math.max(0, trust));
+                html += `
+                <div style="background:#26272b;border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="font-size:13px;font-weight:600;color:#e8eaed;">🛡️ Trust-Score</span>
+                        <span style="font-size:18px;font-weight:700;color:${trustColor};">${trust}/100</span>
+                    </div>
+                    <div style="height:8px;background:#303134;border-radius:4px;overflow:hidden;margin-bottom:8px;">
+                        <div style="width:${pct}%;height:100%;background:${trustColor};border-radius:4px;transition:width 0.5s;"></div>
+                    </div>
+                    <div style="font-size:12px;font-weight:600;color:${trustColor};margin-bottom:4px;">${trustLabel}</div>
+                    <div style="font-size:11px;color:#9aa0a6;line-height:1.5;">${trustDesc}</div>
+                </div>`;
+            }
+
+            // ── Trust-Faktoren als Chips ──────────────────────────────
+            html += `<div style="font-size:11px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Vertrauens-Faktoren</div>`;
+            html += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">`;
+
+            // Spam → sauber?
+            if (!isNaN(spam)) {
+                const spamOk = spam <= 25;
+                html += `<span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;
+                    background:${spamOk ? 'rgba(76,175,80,0.12)' : 'rgba(244,67,54,0.1)'};
+                    color:${spamOk ? '#4caf50' : '#f44336'};
+                    border:1px solid ${spamOk ? 'rgba(76,175,80,0.3)' : 'rgba(244,67,54,0.25)'};">
+                    ${spamOk ? '✅ Kein Spam' : '⚠️ Spam-Verdacht'}</span>`;
+            }
+
+            // Community-Abstimmungen (Approval-Rating)
+            if (approvalRating !== null && totalVotes > 0) {
+                const ratingOk = approvalRating >= 50;
+                const ratingColor = approvalRating >= 70 ? '#4caf50' : approvalRating >= 40 ? '#ff9800' : '#f44336';
+                html += `<span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;
+                    background:${ratingOk ? 'rgba(76,175,80,0.12)' : 'rgba(244,67,54,0.1)'};
+                    color:${ratingColor};
+                    border:1px solid ${ratingOk ? 'rgba(76,175,80,0.3)' : 'rgba(244,67,54,0.25)'};">
+                    👥 ${approvalRating}% positiv (${totalVotes} Abstimmungen)</span>`;
+            } else {
+                html += `<span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;background:rgba(255,255,255,0.05);color:#5f6368;border:1px solid rgba(255,255,255,0.08);">Noch keine Community-Votes</span>`;
+            }
+
+            // Trending
+            if (trending || trend > 0) {
+                html += `<span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;background:rgba(138,180,248,0.12);color:#8ab4f8;border:1px solid rgba(138,180,248,0.25);">📈 Trending +${trend}</span>`;
+            }
+
+            html += `</div>`;
+
+            // ── Hinweis was Luma NICHT zeigt ─────────────────────────
+            html += `<div style="padding:10px 14px;background:rgba(138,180,248,0.05);border:1px solid rgba(138,180,248,0.12);border-radius:8px;font-size:11px;color:#5f6368;line-height:1.6;">
+                ℹ️ Luma bewertet Quellen nach Trust, Qualität und Community-Feedback — nicht nach bezahlter Werbung oder SEO-Budget.
+            </div>`;
+
+            scoresEl.innerHTML = html;
+
+            // ── Quellen-Karte ─────────────────────────────────────────
+            const DOMAIN_KONZERN = {
+                'bild.de':'Axel Springer','welt.de':'Axel Springer','businessinsider.de':'Axel Springer',
+                'n-tv.de':'Bertelsmann','stern.de':'Bertelsmann','capital.de':'Bertelsmann',
+                'zeit.de':'Holtzbrinck','handelsblatt.com':'Holtzbrinck','tagesspiegel.de':'Holtzbrinck','wiwo.de':'Holtzbrinck',
+                'focus.de':'Burda','huffpost.de':'Burda',
+                'spiegel.de':'Spiegel-Verlag','manager-magazin.de':'Spiegel-Verlag',
+                'sueddeutsche.de':'SWM','faz.net':'FAZ-Gruppe',
+                'berliner-zeitung.de':'Ippen Digital','fr.de':'Ippen Digital','merkur.de':'Ippen Digital',
+                'taz.de':'taz','t-online.de':'t-online (Telekom)',
+                'rnd.de':'Madsack','morgenpost.de':'Funke Mediengruppe',
+                'ksta.de':'DuMont','mopo.de':'DuMont',
+            };
+
+            if (allResults && allResults.length > 0) {
+                const konzernMap = {};
+                allResults.forEach(r => {
+                    try {
+                        const d = new URL(r.url).hostname.replace(/^www\./, '');
+                        const k = DOMAIN_KONZERN[d] || d;
+                        konzernMap[k] = (konzernMap[k] || 0) + 1;
+                    } catch {}
+                });
+
+                const total    = allResults.length;
+                const konzerne = Object.entries(konzernMap).sort((a, b) => b[1] - a[1]);
+                const dominant = konzerne[0];
+                const dominantPct = dominant ? Math.round(dominant[1] / total * 100) : 0;
+
+                let quellenHtml = `<div style="margin-bottom:10px;padding:10px 14px;background:#26272b;border-radius:8px;">
+                    <div style="font-size:13px;color:#e8eaed;font-weight:500;">${total} Ergebnisse · ${konzerne.length} Quellen</div>
+                    <div style="font-size:11px;margin-top:3px;color:${dominantPct > 40 ? '#ff9800' : '#4caf50'};">
+                        ${dominantPct > 40
+                            ? '⚠️ ' + dominant[0] + ' dominiert (' + dominantPct + '% der Ergebnisse)'
+                            : '✅ Gute Quellenvielfalt — kein Konzern dominiert'}
+                    </div>
+                </div>`;
+
+                konzerne.slice(0, 7).forEach(([k, n]) => {
+                    const pct = Math.round(n / total * 100);
+                    const barColor = pct > 40 ? '#ff9800' : '#8ab4f8';
+                    quellenHtml += `<div style="margin-bottom:7px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                            <span style="font-size:11px;color:#bdc1c6;">${k}</span>
+                            <span style="font-size:11px;color:#9aa0a6;">${n}× · ${pct}%</span>
+                        </div>
+                        <div style="height:4px;background:#303134;border-radius:2px;overflow:hidden;">
+                            <div style="width:${pct}%;height:100%;background:${barColor};border-radius:2px;transition:width 0.4s;"></div>
+                        </div>
+                    </div>`;
+                });
+
+                quellenEl.innerHTML = quellenHtml;
+            } else {
+                quellenEl.innerHTML = '<span style="color:#5f6368;font-size:11px;">Suchergebnisse nicht verfügbar</span>';
+            }
+
+            modal.style.display = 'block';
+        };
+
+        // Start — richtigen Tab beim Laden aktivieren
+        tabsInner.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.type === currentTab);
+        });
+        initialLoad();
+
+        // ── POGO-TRACKING ─────────────────────────────────────────────────
+        // Session-ID vom Server holen (Express-Session)
+        let _sessionId = '';
+        fetch('/api/session-id').then(r => r.json()).then(d => { _sessionId = d.sid || ''; }).catch(() => {});
+
+        // lumaTrackClick wird von result-list.js aufgerufen: onclick="lumaTrackClick(url, idx)"
+        // idx ist 0-basiert aus der Schleife, daher +1 für 1-basierte Position
+        // lumaTrackClick — für normale Links (gleicher Tab)
+        // quelle = 'alles' | 'news-widget' | 'bilder' | etc.
+        window.lumaTrackClick = function(url, idx, quelle) {
+            const position = (typeof idx === 'number' ? idx : parseInt(idx) || 0) + 1;
+            let domain = '';
+            try { domain = new URL(url).hostname.replace(/^www\./, '').toLowerCase(); } catch {}
+            const payload = JSON.stringify({
+                query: currentQuery, url, position, domain,
+                sessionId: _sessionId,
+                quelle: quelle || 'alles',
+            });
+            fetch('/api/click', {
+                method: 'POST', body: payload,
+                headers: { 'Content-Type': 'application/json' }, keepalive: true,
+            }).catch(() => {});
+        };
+
+        // lumaTrackClickNeuTab — für target="_blank" Links (News-Widget etc.)
+        // Gibt false zurück damit der Browser die Navigation kurz verzögert
+        // bis der Beacon gesendet wurde, dann öffnet er den Tab trotzdem.
+        window.lumaTrackClickNeuTab = function(e, url, idx) {
+            e.preventDefault();
+            const position = (typeof idx === 'number' ? idx : parseInt(idx) || 0) + 1;
+            let domain = '';
+            try { domain = new URL(url).hostname.replace(/^www\./, '').toLowerCase(); } catch {}
+            const payload = JSON.stringify({
+                query: currentQuery, url, position, domain, sessionId: _sessionId,
+            });
+            // sendBeacon ist hier besser — feuert garantiert auch wenn Seite sich ändert
+            const gesendet = navigator.sendBeacon && navigator.sendBeacon(
+                '/api/click', new Blob([payload], { type: 'application/json' })
+            );
+            if (!gesendet) {
+                fetch('/api/click', {
+                    method: 'POST', body: payload,
+                    headers: { 'Content-Type': 'application/json' }, keepalive: true,
+                }).catch(() => {});
+            }
+            // Neuen Tab trotzdem öffnen
+            window.open(url, '_blank', 'noopener');
+        };
+    </script>
+
+    <!-- Autocomplete -->
+    <script type="module" src="/autocomplete/index.js"></script>
+
+</body>
+</html>

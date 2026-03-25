@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luma Suche</title>
+    
+    <!-- Service Worker Registration (PWA) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js');
+            });
+        }    
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="search" type="application/opensearchdescription+xml" title="Luma" href="/opensearch.xml">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:       #1c1c1d;
+            --surface:  #1a1a1e;
+            --surface2: #242428;
+            --border:   #35353a;
+            --text:     #ededef;
+            --muted:    #888898;  
+            --accent:   #C29A40;
+            --accent2:  #C29A40;
+            --glow:     rgba(16, 83, 39, 0.14);
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            padding: 15vh 20px 0;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Ambient glow blobs */
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .blob-1 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(123, 167, 247, 0.08) 0%, transparent 70%);
+            top: -100px; left: -100px;
+        }
+        .blob-2 {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(240, 112, 112, 0.06) 0%, transparent 70%);
+            bottom: -80px; right: -80px;
+        }
+
+        .center {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* Logo */
+        .logo {
+            font-size: clamp(56px, 10vw, 90px);
+            font-weight: 700;
+            letter-spacing: -3px;
+            margin-bottom: 12px;
+            user-select: none;
+            line-height: 1;
+        }
+        .logo .u { color: var(--accent2); }
+
+        .tagline {
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 40px;
+            letter-spacing: 0.3px;
+        }
+
+        /* Search box */
+        .search-wrap {
+            width: 100%;
+            max-width: 660px;
+        }
+
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 17px 20px;
+            background: #303134;
+            border: 1px solid #5f6368;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+        }
+        #searchInput::placeholder { color: var(--muted); }
+        #searchInput:focus {
+            border-color: var(--accent);
+            box-shadow: 0 1px 30px #c29b4025;
+        }
+
+        /* Quick chips */
+        .quick-links {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            min-height: 36px;
+        }
+
+        .chip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            color: var(--muted);
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s, background 0.2s;
+            text-decoration: none;
+        }
+        .chip:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(194, 154, 64, 0.07);
+        }
+        .chip-delete {
+            display: none;
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 16px;
+            height: 16px;
+            background: #444;
+            border-radius: 50%;
+            font-size: 10px;
+            line-height: 16px;
+            text-align: center;
+            color: #ccc;
+            cursor: pointer;
+            border: 1px solid var(--border);
+        }
+        .chip:hover .chip-delete { display: block; }
+        .chip-delete:hover { background: #c0392b; color: #fff; }
+
+        .chip-add {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            background: transparent;
+            border: 1px dashed var(--border);
+            border-radius: 100px;
+            color: var(--muted);
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .chip-add:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* Quick-Link Modal */
+        .ql-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .ql-modal-overlay.open { display: flex; }
+        .ql-modal {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .ql-modal h3 { font-size: 15px; font-weight: 600; color: var(--text); }
+        .ql-modal input {
+            width: 100%;
+            padding: 10px 14px;
+            background: #303134;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+        }
+        .ql-modal input:focus { border-color: var(--accent); }
+        .ql-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .ql-btn {
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            border: none;
+        }
+        .ql-btn-cancel { background: var(--surface); color: var(--muted); }
+        .ql-btn-save { background: var(--accent); color: #111; font-weight: 600; }
+
+        /* Footer */
+        footer {
+            width: calc(100% + 40px);
+            padding: 14px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            background: rgba(15, 15, 17, 0.85);
+            backdrop-filter: blur(16px);
+            font-size: 13px;
+            color: var(--muted);
+            z-index: 10;
+            margin-top: auto;
+            margin-left: -20px;
+            margin-right: -20px;
+        }
+        footer a {
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        footer a:hover { color: var(--text); }
+
+        mark { background: none; font-weight: bold; color: #fdd835; padding: 0; }
+
+        .login-btn {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            color: var(--muted);
+            transition: color 0.2s;
+            z-index: 10;
+        }
+        .login-btn:hover {
+            color: var(--text);
+        }
+
+        @media (max-width: 820px) {
+            footer {
+                flex-direction: column;
+                gap: 12px;
+                padding: 14px 16px;
+                height: auto;
+            }
+            .footer-links {
+                display: flex;
+                gap: 12px 18px;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            footer > span {
+                text-align: center;
+            }
+        }
+
+        /* Desktop Footer Links */
+        @media (min-width: 821px) {
+            .footer-links { display: flex; gap: 22px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <button class="hamburger-btn" aria-label="Menü öffnen">
+        <span class="line"></span>
+        <span class="line"></span>
+        <span class="line"></span>
+    </button>
+
+    <a href="login.html" class="login-btn" aria-label="Anmelden">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+    </a>
+
+    <div class="center">
+        <h1 class="logo">L<span class="u">u</span>ma</h1>
+        
+
+        <div class="search-wrap">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Luma fragen" autocomplete="off" spellcheck="false">
+            </div>
+
+            <a href="#" id="findSolutionLink" onclick="goToHub()" style="display: block; margin-top: 5px; font-size: 12px; color: #C29A40; text-decoration: none;">Lösung finden</a>
+
+
+            <div class="quick-links" id="quickLinksContainer"></div>
+        </div>
+    </div>
+
+    <!-- Quick-Link Modal -->
+    <div class="ql-modal-overlay" id="qlOverlay">
+        <div class="ql-modal">
+            <h3>Schnelllink hinzufügen</h3>
+            <input type="text" id="qlLabel" placeholder="Name (z.B. Reddit)" maxlength="30">
+            <input type="text" id="qlQuery" placeholder="Suchbegriff (z.B. Reddit)" maxlength="100">
+            <div class="ql-modal-actions">
+                <button class="ql-btn ql-btn-cancel" id="qlCancel">Abbrechen</button>
+                <button class="ql-btn ql-btn-save" id="qlSave">Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <span>©Luma Suche</span>
+        <div class="footer-links">
+            <a href="/blocked.html">Blockiert</a>
+            <a href="/terms.html">Nutzung</a>
+            <a href="/datenschutz.html">Datenschutz</a>
+            <a href="/setting">Einstellungen</a>
+            <a href="/about.html">Über Luma</a>
+        </div>
+    </footer>
+
+    <script>
+        const input     = document.getElementById('searchInput');
+        const qlContainer = document.getElementById('quickLinksContainer');
+        const qlOverlay   = document.getElementById('qlOverlay');
+        const qlLabel     = document.getElementById('qlLabel');
+        const qlQuery     = document.getElementById('qlQuery');
+        const QL_KEY      = 'luma_quick_links';
+
+        // ── Suche ────────────────────────────────────────────────────────────────
+        async function doSearch() {
+            const q = input.value.trim();
+            if (q.length < 2) return;
+            try {
+                await fetch('/api/log-query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: q, searchType: 'main-search' })
+                });
+            } catch {}
+            window.location.href = `/results.html?q=${encodeURIComponent(q)}`;
+        }
+
+        function goToHub() {
+            const q = input.value.trim();
+            if (!q) { input.focus(); return; }
+            window.location.href = `/social-hub.html?q=${encodeURIComponent(q)}`;
+        }
+
+        function setSearch(term) { input.value = term; input.focus(); }
+
+
+        input.addEventListener('keypress', e => { if (e.key === 'Enter') doSearch(); });
+        document.querySelector('.hamburger-btn').addEventListener('click', () => {
+            window.location.href = '/setting';
+        });
+
+        // ── Quick-Links ───────────────────────────────────────────────────────────
+        function loadLinks() {
+            try { return JSON.parse(localStorage.getItem(QL_KEY) || '[]'); } catch { return []; }
+        }
+        function saveLinks(links) {
+            localStorage.setItem(QL_KEY, JSON.stringify(links));
+            // Cloud-Sync wenn eingeloggt
+            fetch('/api/user/preferences', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quicklinks: links })
+            }).catch(() => {});
+        }
+
+        function renderLinks(isLoggedIn) {
+            qlContainer.innerHTML = '';
+            const links = loadLinks();
+
+            links.forEach((link, idx) => {
+                const searchUrl = `/results.html?q=${encodeURIComponent(link.query)}`;
+                const chip = document.createElement('a');
+                chip.className = 'chip';
+                chip.href = searchUrl;
+                chip.textContent = link.label;
+
+                // Linksklick → gleicher Tab
+                chip.addEventListener('click', e => {
+                    e.preventDefault();
+                    window.location.href = searchUrl;
+                });
+
+                // Mausrad-Klick (Button 1) → neuer Tab
+                chip.addEventListener('mousedown', e => {
+                    if (e.button === 1) {
+                        e.preventDefault();
+                        window.open(searchUrl, '_blank');
+                    }
+                });
+
+                if (isLoggedIn) {
+                    const del = document.createElement('span');
+                    del.className = 'chip-delete';
+                    del.textContent = '×';
+                    del.title = 'Entfernen';
+                    del.addEventListener('click', e => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        const updated = loadLinks();
+                        updated.splice(idx, 1);
+                        saveLinks(updated);
+                        renderLinks(true);
+                    });
+                    chip.appendChild(del);
+                }
+
+                qlContainer.appendChild(chip);
+            });
+
+            // + Button immer sichtbar; Nicht-Eingeloggte werden zur Login-Seite weitergeleitet
+            const addBtn = document.createElement('button');
+            addBtn.className = 'chip-add';
+            addBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Hinzufügen';
+            addBtn.addEventListener('click', () => {
+                if (!isLoggedIn) { window.location.href = '/login.html'; return; }
+                qlLabel.value = '';
+                qlQuery.value = '';
+                qlOverlay.classList.add('open');
+                qlLabel.focus();
+            });
+            qlContainer.appendChild(addBtn);
+        }
+
+        // Modal-Logik
+        document.getElementById('qlCancel').addEventListener('click', () => {
+            qlOverlay.classList.remove('open');
+        });
+        qlOverlay.addEventListener('click', e => {
+            if (e.target === qlOverlay) qlOverlay.classList.remove('open');
+        });
+        document.getElementById('qlSave').addEventListener('click', () => {
+            const label = qlLabel.value.trim();
+            const query = qlQuery.value.trim();
+            if (!label || !query) return;
+            const links = loadLinks();
+            links.push({ label, query });
+            saveLinks(links);
+            qlOverlay.classList.remove('open');
+            renderLinks(true);
+        });
+        qlQuery.addEventListener('keypress', e => {
+            if (e.key === 'Enter') document.getElementById('qlSave').click();
+        });
+
+        // ── Auth-Check (Login-Button + Quick-Links mit Cloud-Sync) ───────────────
+        (async () => {
+            try {
+                const res  = await fetch('/api/auth/me');
+                const data = await res.json();
+                const btn  = document.querySelector('.login-btn');
+
+                if (data.loggedIn) {
+                    if (btn) {
+                        btn.href  = '/my-account.html';
+                        btn.title = data.email + ' — Mein Konto';
+                        btn.setAttribute('aria-label', 'Mein Konto');
+                        const dot = document.createElement('span');
+                        dot.style.cssText = 'position:absolute;bottom:2px;right:2px;width:8px;height:8px;background:#4caf50;border-radius:50%;border:2px solid #0f0f11;';
+                        btn.appendChild(dot);
+                    }
+                    // Cloud-Links laden und mit localStorage synchronisieren
+                    try {
+                        const prefRes  = await fetch('/api/user/preferences');
+                        const prefData = await prefRes.json();
+                        if (prefData.success && Array.isArray(prefData.preferences?.quicklinks)) {
+                            localStorage.setItem(QL_KEY, JSON.stringify(prefData.preferences.quicklinks));
+                        }
+                    } catch {}
+                    renderLinks(true);
+                } else {
+                    if (btn) { btn.href = '/login.html'; btn.title = 'Anmelden'; }
+                    renderLinks(false);
+                }
+            } catch {
+                renderLinks(false);
+            }
+        })();
+    </script>
+
+    <!-- Password Security Modules (MUST load FIRST and synchronously) -->
+    <script defer src="/modules/passwort/PasswordStrengthAnalyzer.js"></script>
+    <script defer src="/modules/passwort/SecurePasswordGenerator.js"></script>
+
+    <script type="module" src="/autocomplete/index.js"></script>
+</body>
+</html>

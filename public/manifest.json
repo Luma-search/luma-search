@@ -1,0 +1,23 @@
+{
+    "name": "Luma Suche",
+    "short_name": "Luma",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1c1c1d",
+    "theme_color": "#1c1c1d",
+    "description": "Die private Suchmaschine, die dir gehört.",
+    "icons": [
+        {
+            "src": "/icons/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        },
+        {
+            "src": "/icons/icon.svg",
+            "sizes": "192x192 512x512",
+            "type": "image/svg+xml"
+        }
+    ],
+    "orientation": "portrait",
+    "categories": ["productivity", "utilities"]
+}

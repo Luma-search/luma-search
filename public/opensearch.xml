@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+    <ShortName>Luma</ShortName>
+    <Description>Luma - Die private Suchmaschine</Description>
+    <InputEncoding>UTF-8</InputEncoding>
+    <Image width="16" height="16" type="image/svg+xml">/icons/icon.svg</Image>
+    <Url type="text/html" template="https://luma-suche.de/results.html?q={searchTerms}"/>
+    <Url type="application/x-suggestions+json" template="https://luma-suche.de/autocomplete/suggest?q={searchTerms}"/>
+    <Language>de-DE</Language>
+</OpenSearchDescription>

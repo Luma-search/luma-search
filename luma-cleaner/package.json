@@ -1,0 +1,5 @@
+{
+  "name": "luma-cleaner",
+  "version": "1.0.0",
+  "main": "cleaner-logic.js" 
+}

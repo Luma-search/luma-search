@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hilfe & Suchtipps – Luma</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:       #0f0f11;
+            --surface:  #1a1a1e;
+            --surface2: #242428;
+            --border:   #35353a;
+            --text:     #ededef;
+            --muted:    #888898;
+            --accent:   #C29A40;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(ellipse at top, #212125, var(--bg) 60%);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 40px 20px 80px;
+        }
+
+        .container { max-width: 900px; margin: 0 auto; }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text);
+            text-align: center;
+        }
+        h1 span { color: var(--accent); }
+
+        h2 { font-size: 1.5rem; margin-top: 40px; margin-bottom: 20px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        h3 { font-size: 1.2rem; margin-top: 25px; margin-bottom: 10px; color: #fff; }
+        p { margin-bottom: 15px; color: #bbb; }
+
+        .card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        code {
+            background: rgba(255,255,255,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: var(--accent);
+        }
+
+        .example-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .example-item {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .example-cmd { font-weight: 600; color: var(--accent); display: block; margin-bottom: 5px; }
+        .example-desc { font-size: 0.9rem; color: var(--muted); }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 40px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .back-link:hover { color: var(--text); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Zurück zur Startseite</a>
+
+        <h1>Wie man <span>richtig</span> sucht</h1>
+        <p style="text-align: center; max-width: 600px; margin: 0 auto 50px;">Luma versteht mehr als nur Stichworte. Nutze diese Tricks, um schneller ans Ziel zu kommen.</p>
+
+        <h2>🔍 Such-Operatoren</h2>
+        <p>Verfeinere deine Ergebnisse mit speziellen Zeichen.</p>
+        
+        <div class="card">
+            <div class="example-grid">
+                <div class="example-item">
+                    <span class="example-cmd">"genauer satz"</span>
+                    <span class="example-desc">Sucht nach der exakten Wortfolge.</span>
+                </div>
+                <div class="example-item">
+                    <span class="example-cmd">site:wikipedia.org</span>
+                    <span class="example-desc">Sucht nur auf einer bestimmten Website.</span>
+                </div>
+                <div class="example-item">
+                    <span class="example-cmd">-wort</span>
+                    <span class="example-desc">Schließt Ergebnisse mit diesem Wort aus (Minuszeichen).</span>
+                </div>
+                <div class="example-item">
+                    <span class="example-cmd">filetype:pdf</span>
+                    <span class="example-desc">Sucht gezielt nach Dateitypen (PDF, DOC, etc.).</span>
+                </div>
+            </div>
+        </div>
+
+        <h2>⚡ Smarte Funktionen</h2>
+        <p>Luma gibt dir oft die Antwort direkt, ohne dass du klicken musst.</p>
+
+        <div class="card">
+            <h3>Taschenrechner</h3>
+            <p>Gib einfach eine Rechnung ein.</p>
+            <div class="example-item">
+                <span class="example-cmd">5 * 12 + 4</span>
+                <span class="example-desc">Löst mathematische Ausdrücke sofort.</span>
+            </div>
+
+            <h3>Währungsumrechner</h3>
+            <p>Rechne Währungen zum aktuellen Kurs um.</p>
+            <div class="example-item">
+                <span class="example-cmd">100 eur in usd</span>
+                <span class="example-desc">Zeigt den aktuellen Wechselkurs an.</span>
+            </div>
+
+            <h3>Wetter</h3>
+            <p>Sieh dir das Wetter für jeden Ort der Welt an.</p>
+            <div class="example-item">
+                <span class="example-cmd">wetter berlin</span>
+                <span class="example-desc">Zeigt Temperatur, Vorhersage und mehr.</span>
+            </div>
+        </div>
+
+        <h2>🛡️ Privatsphäre</h2>
+        <div class="card">
+            <p>Deine Suchanfragen gehören dir. Luma speichert keine persönlichen Profile und verfolgt dich nicht über das Internet. Wenn du Ergebnisse anklickst, leiten wir dich direkt weiter, ohne Tracking-Umwege.</p>
+            <p><a href="/datenschutz.html" style="color: var(--accent);">Mehr zum Datenschutz lesen →</a></p>
+        </div>
+
+        <footer style="text-align: center; margin-top: 60px; color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--border); padding-top: 20px;">
+            &copy; Luma Suche.
+        </footer>
+    </div>
+</body>
+</html>

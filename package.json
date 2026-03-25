@@ -1,0 +1,58 @@
+{
+  "name": "luma",
+  "version": "2.0.0",
+  "description": "Luma - Medienanalyse-Plattform mit Widerspruchs-Erkennung",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "widerspruchs:start": "node Fakten-Check/controller.js",
+    "widerspruchs:start:parallel": "node Fakten-Check/controller.js --parallel",
+    "widerspruchs:check": "node Fakten-Check/controller.js --check-only",
+    "widerspruchs:shingler": "node Fakten-Check/shingler.js",
+    "widerspruchs:machine": "node Fakten-Check/widerspruchs_maschine.js",
+    "widerspruchs:logs": "tail -f Fakten-Check/logs/*.log",
+    "pm2:start": "pm2 start Fakten-Check/ecosystem.config.js",
+    "pm2:stop": "pm2 stop all",
+    "pm2:restart": "pm2 restart all",
+    "pm2:logs": "pm2 logs"
+  },
+  "keywords": [
+    "luma",
+    "media",
+    "analysis",
+    "contradiction",
+    "copy-detection"
+  ],
+  "author": "Luma Team",
+  "license": "MIT",
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "pm2": "^5.3.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.97.0",
+    "@xenova/transformers": "^2.17.2",
+    "axios": "^1.13.6",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.6.2",
+    "cheerio": "^1.2.0",
+    "compression": "^1.8.1",
+    "connect-pg-simple": "^10.0.0",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "express-session": "^1.19.0",
+    "fuse.js": "^7.0.0",
+    "ioredis": "^5.10.1",
+    "luma-cleaner": "file:luma-cleaner",
+    "murmurhash3js": "^3.0.1",
+    "node-emoji": "^2.2.0",
+    "node-schedule": "^2.1.1",
+    "pg": "^8.20.0",
+    "playwright": "^1.58.2",
+    "socket.io": "^4.8.3",
+    "sql.js": "^1.14.0",
+    "whois-json": "^2.0.4"
+  }
+}

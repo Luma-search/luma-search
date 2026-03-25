@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luma | Kategorie</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg:        #0f0f11;
+            --surface:   #1a1a1e;
+            --surface2:  #242428;
+            --border:    #35353a;
+            --text:      #ededef;
+            --muted:     #888898;
+            --accent:    #C29A40;
+            --accent-bg: rgba(194,154,64,0.10);
+            --positive:  #4caf50;
+            --like:      #e8567a;
+            --like-bg:   rgba(232,86,122,0.12);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 40px 20px 80px;
+        }
+        .blob { position: fixed; border-radius: 50%; filter: blur(90px); z-index: -1; pointer-events: none; }
+        .blob-1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(194,154,64,0.07) 0%, transparent 70%); top: -200px; left: -200px; }
+        .blob-2 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%); bottom: -150px; right: -150px; }
+
+        .page { max-width: 960px; margin: 0 auto; }
+
+        /* ── Header ─────────────────────────────────────────── */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 36px;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+        .logo { font-size: 24px; font-weight: 700; color: var(--text); text-decoration: none; }
+        .logo span { color: var(--accent); }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--muted);
+            font-size: 13px;
+            text-decoration: none;
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            transition: all 0.15s;
+        }
+        .back-btn:hover { color: var(--text); border-color: var(--text); }
+
+        /* ── Kategorie Hero ──────────────────────────────────── */
+        .category-hero {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+        .category-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 300px; height: 100%;
+            background: radial-gradient(circle at right, rgba(194,154,64,0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .category-hero-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+        .category-hero h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 12px;
+        }
+        .category-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .meta-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 99px;
+            padding: 4px 12px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+        .meta-pill svg { width: 12px; height: 12px; }
+
+        /* ── Suchleiste ──────────────────────────────────────── */
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+        .search-input-wrap {
+            flex: 1;
+            position: relative;
+        }
+        .search-input-wrap svg {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px; height: 16px;
+            color: var(--muted);
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+        }
+        .search-input {
+            width: 100%;
+            padding: 11px 16px 11px 42px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus { border-color: var(--accent); }
+        .search-input::placeholder { color: var(--muted); opacity: 0.6; }
+
+        /* ── Sort Buttons ────────────────────────────────────── */
+        .sort-wrap {
+            display: flex;
+            gap: 6px;
+        }
+        .sort-btn {
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            font-size: 12px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .sort-btn.active, .sort-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-bg);
+        }
+
+        /* ── Collection + Links Layout ───────────────────────── */
+        .collections-list { display: flex; flex-direction: column; gap: 20px; }
+
+        .coll-block {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .coll-block:hover { border-color: rgba(194,154,64,0.3); }
+
+        .coll-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            cursor: pointer;
+            gap: 12px;
+        }
+        .coll-header-left { flex: 1; min-width: 0; }
+        .coll-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .coll-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 11px;
+            color: var(--muted);
+            flex-wrap: wrap;
+        }
+        .coll-badge {
+            background: var(--accent-bg);
+            color: var(--accent);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .coll-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+        .tag-chip {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 99px;
+            padding: 2px 8px;
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .coll-header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .like-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .like-btn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; transition: all 0.18s; }
+        .like-btn:hover { border-color: var(--like); color: var(--like); background: var(--like-bg); }
+        .like-btn.liked { border-color: var(--like); color: var(--like); background: var(--like-bg); }
+        .like-btn.liked svg { fill: var(--like); stroke: var(--like); }
+
+        .toggle-btn {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+        .toggle-btn:hover { color: var(--text); border-color: var(--text); }
+        .toggle-btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; transition: transform 0.2s; }
+        .toggle-btn.open svg { transform: rotate(180deg); }
+
+        /* ── Link Einträge ───────────────────────────────────── */
+        .links-list {
+            border-top: 1px solid var(--border);
+            display: none;
+        }
+        .links-list.open { display: block; }
+
+        .link-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+        .link-item:last-child { border-bottom: none; }
+        .link-item:hover { background: var(--surface2); }
+
+        .link-favicon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .link-favicon img { width: 16px; height: 16px; }
+        .link-favicon svg { width: 14px; height: 14px; color: var(--muted); fill: none; stroke: currentColor; stroke-width: 2; }
+
+        .link-content { flex: 1; min-width: 0; }
+        .link-title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+        }
+        .link-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent);
+            text-decoration: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 400px;
+        }
+        .link-title:hover { text-decoration: underline; }
+        .link-domain {
+            font-size: 11px;
+            color: var(--muted);
+            background: var(--surface2);
+            padding: 1px 7px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        .link-reason {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+        .link-meta {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ── Empty / Loading ─────────────────────────────────── */
+        .skeleton {
+            background: linear-gradient(90deg, var(--surface2) 25%, #2e2e35 50%, var(--surface2) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+            border-radius: 10px;
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+        .empty-state svg { width: 40px; height: 40px; margin-bottom: 14px; opacity: 0.35; }
+        .empty-state p { font-size: 14px; }
+
+        /* ── Toast ───────────────────────────────────────────── */
+        .toast-container { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 13px; box-shadow: 0 8px 30px rgba(0,0,0,0.3); animation: toastIn 0.25s ease; }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        .toast.success { border-left: 4px solid var(--positive); }
+        .toast.error   { border-left: 4px solid #f44336; }
+        .toast.info    { border-left: 4px solid var(--accent); }
+
+        .icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+</head>
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="toast-container" id="toast-container"></div>
+
+    <div class="page">
+
+        <header>
+            <a href="/" class="logo">L<span>u</span>ma</a>
+            <a href="/collection-manager.html" class="back-btn">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+                Zurück zu Kollektionen
+            </a>
+        </header>
+
+        <!-- Kategorie Hero -->
+        <div class="category-hero">
+            <div class="category-hero-label">Kategorie</div>
+            <h1 id="category-title">Lädt…</h1>
+            <div class="category-meta" id="category-meta">
+                <span class="meta-pill">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    <span id="coll-count">—</span> Sammlungen
+                </span>
+                <span class="meta-pill">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                    <span id="link-count">—</span> Links
+                </span>
+            </div>
+        </div>
+
+        <!-- Suche + Sortierung -->
+        <div class="search-bar">
+            <div class="search-input-wrap">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input class="search-input" id="search-input" type="text" placeholder="Links oder Sammlungen durchsuchen…">
+            </div>
+            <div class="sort-wrap">
+                <button class="sort-btn active" data-sort="neu">Neueste</button>
+                <button class="sort-btn" data-sort="likes">Beliebt</button>
+                <button class="sort-btn" data-sort="links">Meiste Links</button>
+            </div>
+        </div>
+
+        <!-- Collections + Links -->
+        <div class="collections-list" id="collections-list">
+            <!-- Skeleton -->
+            <div class="coll-block">
+                <div class="coll-header" style="pointer-events:none;">
+                    <div style="flex:1;">
+                        <div class="skeleton" style="height:18px;width:40%;margin-bottom:8px;"></div>
+                        <div class="skeleton" style="height:12px;width:60%;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="coll-block">
+                <div class="coll-header" style="pointer-events:none;">
+                    <div style="flex:1;">
+                        <div class="skeleton" style="height:18px;width:55%;margin-bottom:8px;"></div>
+                        <div class="skeleton" style="height:12px;width:45%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+    'use strict';
+
+    // ─── State ────────────────────────────────────────────────────
+    let _allCollections = [];
+    let _currentUser    = null;
+    let _likedIds       = new Set();
+    let _activeSort     = 'neu';
+    let _searchQuery    = '';
+
+    // ─── Init ─────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
+        const params   = new URLSearchParams(window.location.search);
+        const category = params.get('category') || '';
+        const listId   = params.get('list') || '';
+
+        // Titel setzen
+        document.title = `Luma | ${category || 'Sammlung'}`;
+        document.getElementById('category-title').textContent = category || 'Alle Sammlungen';
+
+        await loadUser();
+
+        if (listId) {
+            // Direkt eine Sammlung öffnen
+            await loadSingleCollection(listId);
+        } else {
+            await loadCategory(category);
+        }
+
+        bindEvents();
+    });
+
+    // ─── Events ───────────────────────────────────────────────────
+    function bindEvents() {
+        // Suche
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            _searchQuery = e.target.value.toLowerCase().trim();
+            renderCollections();
+        });
+
+        // Sortierung
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                _activeSort = btn.dataset.sort;
+                document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderCollections();
+            });
+        });
+    }
+
+    // ─── Nutzer laden ─────────────────────────────────────────────
+    async function loadUser() {
+        try {
+            const res  = await fetch('/api/auth/me');
+            if (!res.ok) return;
+            const data = await res.json();
+            _currentUser = data;
+
+            // Eigene Likes laden
+            if (data.loggedIn) {
+                const r = await fetch('/api/collections?user=me');
+                const d = r.ok ? await r.json() : {};
+                if (d.likedIds) _likedIds = new Set(d.likedIds.map(String));
+            }
+        } catch (e) {}
+    }
+
+    // ─── Kategorie laden ──────────────────────────────────────────
+    async function loadCategory(category) {
+        try {
+            const url = category
+                ? `/api/collections?category=${encodeURIComponent(category)}&limit=100`
+                : '/api/collections?limit=100';
+
+            const res  = await fetch(url);
+            const data = res.ok ? await res.json() : [];
+            _allCollections = Array.isArray(data) ? data : (data.lists || []);
+
+            // Für jede Collection die Links laden
+            await Promise.all(_allCollections.map(async (coll) => {
+                try {
+                    const r = await fetch(`/api/collections/${coll.id}`);
+                    if (r.ok) {
+                        const d = await r.json();
+                        coll.entries = d.entries || [];
+                    } else {
+                        coll.entries = [];
+                    }
+                } catch { coll.entries = []; }
+            }));
+
+            // Meta-Zahlen
+            const totalLinks = _allCollections.reduce((s, c) => s + (c.entries?.length || 0), 0);
+            document.getElementById('coll-count').textContent = _allCollections.length;
+            document.getElementById('link-count').textContent = totalLinks;
+
+            renderCollections();
+
+        } catch (e) {
+            console.error('[Category] Laden fehlgeschlagen:', e);
+            showEmpty('Sammlungen konnten nicht geladen werden.');
+        }
+    }
+
+    // ─── Einzelne Collection laden (direkter Link) ────────────────
+    async function loadSingleCollection(id) {
+        try {
+            const res  = await fetch(`/api/collections/${id}`);
+            if (!res.ok) { showEmpty('Sammlung nicht gefunden.'); return; }
+            const data = await res.json();
+            data.entries = data.entries || [];
+            _allCollections = [data];
+
+            document.getElementById('category-title').textContent = data.title;
+            document.getElementById('coll-count').textContent = '1';
+            document.getElementById('link-count').textContent = data.entries.length;
+
+            renderCollections();
+        } catch (e) {
+            showEmpty('Sammlung konnte nicht geladen werden.');
+        }
+    }
+
+    // ─── Collections rendern ──────────────────────────────────────
+    function renderCollections() {
+        const container = document.getElementById('collections-list');
+
+        // Filtern
+        let list = _allCollections.filter(c => {
+            if (!_searchQuery) return true;
+            const inTitle = c.title?.toLowerCase().includes(_searchQuery);
+            const inDesc  = c.description?.toLowerCase().includes(_searchQuery);
+            const inLinks = c.entries?.some(e =>
+                e.url?.toLowerCase().includes(_searchQuery) ||
+                e.reason?.toLowerCase().includes(_searchQuery) ||
+                e.titel?.toLowerCase().includes(_searchQuery)
+            );
+            return inTitle || inDesc || inLinks;
+        });
+
+        // Sortieren
+        if (_activeSort === 'likes') list = [...list].sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0));
+        if (_activeSort === 'links') list = [...list].sort((a, b) => (b.entries?.length || 0) - (a.entries?.length || 0));
+        if (_activeSort === 'neu')   list = [...list].sort((a, b) => new Date(b.erstellt_am) - new Date(a.erstellt_am));
+
+        if (list.length === 0) {
+            showEmpty(_searchQuery ? `Keine Ergebnisse für "${_searchQuery}".` : 'Noch keine Sammlungen in dieser Kategorie.');
+            return;
+        }
+
+        container.innerHTML = list.map(coll => buildCollBlock(coll)).join('');
+    }
+
+    function buildCollBlock(coll) {
+        const entries   = coll.entries || [];
+        const liked     = _likedIds.has(String(coll.id));
+        const likeCount = coll.likeCount ?? 0;
+        const initials  = (coll.username || 'U').substring(0, 2).toUpperCase();
+        const tagsHtml  = Array.isArray(coll.tags) && coll.tags.length > 0
+            ? `<div class="coll-tags">${coll.tags.slice(0, 5).map(t =>
+                `<span class="tag-chip">#${escapeHtml(t)}</span>`).join('')}</div>`
+            : '';
+
+        const linksHtml = entries.length === 0
+            ? `<div style="padding:20px 24px;font-size:13px;color:var(--muted);">Noch keine Links in dieser Sammlung.</div>`
+            : entries.map(e => buildLinkItem(e)).join('');
+
+        return `
+        <div class="coll-block" id="coll-${coll.id}">
+            <div class="coll-header" onclick="toggleLinks(${coll.id})">
+                <div class="coll-header-left">
+                    <div class="coll-title">${escapeHtml(coll.title)}</div>
+                    <div class="coll-meta">
+                        <span class="coll-badge">${entries.length} Links</span>
+                        <span>von ${escapeHtml(coll.username || 'Unbekannt')}</span>
+                        ${coll.description ? `<span>· ${escapeHtml(coll.description.slice(0, 60))}${coll.description.length > 60 ? '…' : ''}</span>` : ''}
+                    </div>
+                    ${tagsHtml}
+                </div>
+                <div class="coll-header-right">
+                    <button
+                        class="like-btn ${liked ? 'liked' : ''}"
+                        onclick="handleLike(event, ${coll.id})">
+                        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        <span class="like-count-${coll.id}">${likeCount}</span>
+                    </button>
+                    <button class="toggle-btn" id="toggle-${coll.id}">
+                        <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="links-list" id="links-${coll.id}">
+                ${linksHtml}
+            </div>
+        </div>`;
+    }
+
+    function buildLinkItem(entry) {
+        let domain = '';
+        try { domain = new URL(entry.url).hostname.replace('www.', ''); } catch {}
+
+        const favicon = domain
+            ? `<img src="https://www.google.com/s2/favicons?domain=${domain}&sz=16" alt="" onerror="this.style.display='none'">`
+            : `<svg class="icon" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`;
+
+        const date = entry.erstellt_am
+            ? new Date(entry.erstellt_am).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' })
+            : '';
+
+        return `
+        <div class="link-item">
+            <div class="link-favicon">${favicon}</div>
+            <div class="link-content">
+                <div class="link-title-row">
+                    <a class="link-title" href="${escapeHtml(entry.url)}" target="_blank" rel="noopener noreferrer">
+                        ${escapeHtml(entry.titel || domain || entry.url)}
+                    </a>
+                    ${domain ? `<span class="link-domain">${escapeHtml(domain)}</span>` : ''}
+                </div>
+                ${entry.reason ? `<div class="link-reason">"${escapeHtml(entry.reason)}"</div>` : ''}
+                <div class="link-meta">
+                    <span>von ${escapeHtml(entry.username || 'Unbekannt')}</span>
+                    ${date ? `<span>· ${date}</span>` : ''}
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // ─── Toggle Links auf/zu ──────────────────────────────────────
+    window.toggleLinks = function(id) {
+        const list   = document.getElementById(`links-${id}`);
+        const toggle = document.getElementById(`toggle-${id}`);
+        if (!list) return;
+        const isOpen = list.classList.toggle('open');
+        toggle?.classList.toggle('open', isOpen);
+    };
+
+    // ─── Like ─────────────────────────────────────────────────────
+    window.handleLike = async function(event, id) {
+        event.stopPropagation();
+        if (!_currentUser?.loggedIn) { showToast('Bitte anmelden um zu liken.', 'info'); return; }
+
+        const btn   = event.currentTarget;
+        const liked = _likedIds.has(String(id));
+        btn.classList.add('loading');
+
+        try {
+            const res = await fetch(`/api/collections/${id}/like`, { method: liked ? 'DELETE' : 'POST' });
+
+            if (res.status === 409) { _likedIds.add(String(id)); btn.classList.add('liked'); return; }
+
+            if (res.ok) {
+                const data = await res.json();
+                if (liked) { _likedIds.delete(String(id)); btn.classList.remove('liked'); }
+                else       { _likedIds.add(String(id));    btn.classList.add('liked'); }
+                const countEl = document.querySelector(`.like-count-${id}`);
+                if (countEl) countEl.textContent = data.likeCount ?? 0;
+            }
+        } catch (e) {
+            showToast('Verbindungsfehler.', 'error');
+        } finally {
+            btn.classList.remove('loading');
+        }
+    };
+
+    // ─── Hilfsfunktionen ──────────────────────────────────────────
+    function showEmpty(msg) {
+        document.getElementById('collections-list').innerHTML = `
+            <div class="empty-state">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                <p>${escapeHtml(msg)}</p>
+            </div>`;
+    }
+
+    function showToast(msg, type = 'info') {
+        const c = document.getElementById('toast-container');
+        if (!c) return;
+        const t = document.createElement('div');
+        t.className = `toast ${type}`;
+        t.innerHTML = `<span>${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span><span>${escapeHtml(msg)}</span>`;
+        c.appendChild(t);
+        setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 320); }, 4000);
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    }
+    </script>
+</body>
+</html>

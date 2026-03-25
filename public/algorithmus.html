@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Der Luma Algorithmus – Luma</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:       #0f0f11;
+            --surface:  #1a1a1e;
+            --surface2: #242428;
+            --border:   #35353a;
+            --text:     #ededef;
+            --muted:    #888898;
+            --accent:   #C29A40;
+            --green:    #4caf50;
+            --red:      #f44336;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(ellipse at top, #212125, var(--bg) 60%);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 40px 20px 80px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: clamp(2.2rem, 5vw, 2.8rem);
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(45deg, var(--accent), #e7c375);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            margin-top: 50px;
+            margin-bottom: 20px;
+            color: var(--text);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            color: #ccc;
+        }
+
+        p {
+            margin-bottom: 15px;
+            color: #bbb;
+        }
+
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ul li::before {
+            content: "•";
+            color: var(--accent);
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+        }
+
+        ul {
+            padding-left: 25px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        code, pre {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 2px 6px;
+            font-family: 'Menlo', 'Consolas', monospace;
+            font-size: 0.9rem;
+        }
+
+        pre {
+            padding: 16px;
+            margin: 20px 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+            line-height: 1.5;
+            color: var(--muted);
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        .header-section p {
+            max-width: 600px; margin: 0 auto;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 30px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: var(--accent);
+        }
+        
+        footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .good { color: var(--green); }
+        .bad { color: var(--red); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <a href="/about.html" class="back-link">← Zurück zu "Über Luma"</a>
+
+        <div class="header-section">
+            <h1>Der Luma Algorithmus</h1>
+            <p style="color: var(--muted);">Stand: Februar 2026</p>
+            <p>Wir glauben an Transparenz. Hier erklären wir in einfacher Sprache, wie Luma Suchergebnisse bewertet, sortiert und anzeigt. Keine Programmierkenntnisse nötig.</p>
+        </div>
+
+        <h2>Das große Bild</h2>
+        <p>Wenn du bei Luma etwas suchst, passiert im Hintergrund Folgendes:</p>
+        <ol>
+            <li><strong>Spam-Filter:</strong> Schlechte, unseriöse oder gefährliche Seiten werden blockiert.</li>
+            <li><strong>Relevanz-Messung:</strong> Wie gut passt jede Seite zu dem, was gesucht wurde?</li>
+            <li><strong>Punktevergabe:</strong> Jede Seite bekommt eine Gesamtpunktzahl (0-100) basierend auf Vertrauen und Relevanz.</li>
+            <li><strong>Sortierung:</strong> Die Seite mit den meisten Punkten landet auf Platz 1.</li>
+            <li><strong>Domain-Vielfalt:</strong> Wir sorgen dafür, dass nicht eine einzige Website die ganze erste Seite dominiert.</li>
+        </ol>
+
+        <h2>Schritt 1: Vertrauen & Spam-Analyse</h2>
+        <p>Zuerst prüft Luma jede Seite und stellt zwei Fragen: "Ist diese Seite vertrauenswürdig?" und "Ist das Spam?".</p>
+        
+        <h3>Der Vertrauens-Score (0-100)</h3>
+        <p>Dieser Wert gibt an, wie seriös eine Seite ist. Er setzt sich zusammen aus:</p>
+        <ul>
+            <li><strong>Expertise & Autorität (E-A-T):</strong> Wirkt die Seite, als wäre sie von Experten geschrieben?</li>
+            <li><strong>Domain-Alter:</strong> Ältere, etablierte Domains sind vertrauenswürdiger.</li>
+            <li><strong>Inhaltsqualität:</strong> Ist der Text gut lesbar und ausführlich?</li>
+            <li><strong>Technische Sicherheit:</strong> Nutzt die Seite HTTPS? Ist sie für Handys optimiert und lädt schnell?</li>
+        </ul>
+        <p>Seiten mit einem sehr niedrigen Vertrauens-Score (unter 20) werden direkt blockiert.</p>
+
+        <h3>Der Spam-Score (0-100)</h3>
+        <p>Dieser Wert misst, wie "spammy" eine Seite wirkt. Folgende Dinge erhöhen den Spam-Score:</p>
+        <ul class="bad-list">
+            <li><span class="bad">Zu viel Werbung:</span> Seiten, die mit Anzeigen überladen sind.</li>
+            <li><span class="bad">Zu wenig Inhalt:</span> "Thin Content" mit weniger als 300 Wörtern.</li>
+            <li><span class="bad">Unlesbarer Text:</span> Kauderwelsch, das wie von einem Bot generiert aussieht.</li>
+            <li><span class="bad">Keyword-Stuffing:</span> Ständiges Wiederholen von Suchbegriffen.</li>
+            <li><span class="bad">Sehr junge Domains:</span> Brandneue Domains (unter 6 Monaten) werden genauer geprüft.</li>
+        </ul>
+        <p>Seiten mit einem kritisch hohen Spam-Score (über 80) werden ebenfalls blockiert.</p>
+
+        <h2>Schritt 2: Relevanz & Finale Punktzahl</h2>
+        <p>Alle Seiten, die den ersten Check überstanden haben, werden nun bewertet, wie gut sie zur Suchanfrage passen. Die finale Punktzahl entscheidet über die Reihenfolge.</p>
+        <pre>Finale Punktzahl = (Vertrauen × 40%) + (Relevanz × 35%) + Boni/Mali</pre>
+        
+        <h3>Faktoren für die Punktzahl</h3>
+        <p>Was einer Seite <strong>hilft</strong> <span class="good">(Bonuspunkte)</span>:</p>
+        <ul class="good-list">
+            <li><span class="good">Suchbegriff im Titel:</span> Das stärkste Signal für Relevanz.</li>
+            <li><span class="good">Ausführlicher Inhalt:</span> Mehr als 2000 Wörter deuten auf Tiefe hin.</li>
+            <li><span class="good">Aktualität:</span> Besonders bei Nachrichtensuchen sind frische Inhalte besser.</li>
+            <li><span class="good">Gute Struktur:</span> Tabellen oder Schritt-für-Schritt-Anleitungen sind ein Plus.</li>
+            <li><span class="good">Community-Vertrauen:</span> Seiten, die von vielen Nutzern positiv bewertet wurden, erhalten einen Bonus.</li>
+            <li><span class="good">Keine Werbung:</span> Eine werbefreie Seite ist nutzerfreundlicher.</li>
+        </ul>
+
+        <p>Was einer Seite <strong>schadet</strong> <span class="bad">(Minuspunkte)</span>:</p>
+        <ul class="bad-list">
+            <li><span class="bad">Viele Werbeanzeigen:</span> Jede Anzeige über der ersten führt zu Abzügen.</li>
+            <li><span class="bad">Langsames Laden:</span> Eine Seite, die länger als 3 Sekunden lädt, wird bestraft.</li>
+            <li><span class="bad">Schlechte Nutzer-Signale:</span> Wenn viele Nutzer eine Seite schnell wieder verlassen ("Pogo-Sticking"), ist das ein negatives Signal.</li>
+            <li><span class="bad">Negative Community-Bewertungen:</span> Wenn die Community eine Seite ablehnt, verliert sie an Ranking.</li>
+        </ul>
+
+        <h2>Schritt 3: Domain-Vielfalt</h2>
+        <p>Damit die Suchergebnisse nicht von einer einzigen Website dominiert werden, gilt eine einfache Regel: In den Top 10 werden <strong>maximal 3 Ergebnisse von derselben Domain</strong> angezeigt. Das sorgt für eine gesunde Mischung an Quellen und Perspektiven.</p>
+
+        <h2>Sonderfunktionen</h2>
+        <h3>Semantische Suche</h3>
+        <p>Luma versteht den <strong>Sinn</strong> deiner Anfrage, nicht nur die exakten Worte. Wenn du nach "günstige Unterkunft München" suchst, finden wir auch Seiten, auf denen "preiswerte Hotels in der bayerischen Landeshauptstadt" steht. Dies wird durch unser eigenes KI-Modell ermöglicht.</p>
+
+        <h3>Community-Abstimmung</h3>
+        <p>Jeder Nutzer kann über das Trust Center die Qualität von Websites bewerten. Diese Stimmen fließen direkt in den Algorithmus ein und helfen, die Ergebnisse für alle zu verbessern. Deine Meinung zählt!</p>
+
+        <h3>Featured Result</h3>
+        <p>Das Ergebnis auf Platz 1, das eine besonders hohe Vertrauens- und Relevanz-Punktzahl erreicht, wird als "KI-Empfehlung" hervorgehoben. Das ist die Seite, die Luma für die beste Antwort auf deine Frage hält.</p>
+
+        <footer>
+            &copy; Luma Suche. Deine Privatsphäre ist uns wichtig.
+        </footer>
+    </div>
+</body>
+</html>

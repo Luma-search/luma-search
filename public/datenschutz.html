@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datenschutz – Luma</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:       #0f0f11;
+            --surface:  #1a1a1e;
+            --surface2: #242428;
+            --border:   #35353a;
+            --text:     #ededef;
+            --muted:    #888898;
+            --accent:   #C29A40;
+            --accent-glow: rgba(194, 154, 64, 0.2);
+            --shadow-color: rgba(0, 0, 0, 0.5);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(ellipse at top, #212125, var(--bg) 60%);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 40px 20px 80px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: clamp(2.2rem, 5vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(45deg, var(--accent), #e7c375);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            margin-top: 50px;
+            margin-bottom: 20px;
+            color: var(--text);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            color: #ccc;
+        }
+
+        p, ul {
+            margin-bottom: 15px;
+            color: #bbb;
+        }
+
+        ul {
+            padding-left: 25px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        .header-section p {
+            max-width: 600px; margin: 0 auto;
+        }
+
+        .card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            padding: 25px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 40px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--text);
+        }
+        
+        footer {
+            margin-top: 80px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        footer a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+        footer a:hover { color: var(--text); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <a href="/" class="back-link">← Zurück zur Startseite</a>
+
+        <div class="header-section">
+            <h1>Datenschutzerklärung</h1>
+            <p style="color: var(--muted);">Stand: Februar 2026</p>
+            <p>Transparenz ist Teil unserer DNA. Hier erfährst du genau, welche Daten Luma verarbeitet, speichert und warum.</p>
+        </div>
+
+        <h2>1. Datenschutz auf einen Blick</h2>
+        <p>Willkommen bei Luma. Wir nehmen den Schutz deiner persönlichen Daten sehr ernst. Luma ist als datenschutzfreundliche Suchmaschine konzipiert. Wir verkaufen deine Daten nicht an Werbetreibende und erstellen keine persönlichen Werbeprofile.</p>
+        <div class="card">
+            <h3>Verantwortliche Stelle</h3>
+            <p>Luma Search Project<br>E-Mail: privacy@luma-suche.de</p>
+        </div>
+
+        <h2>2. Datenerfassung bei der Nutzung</h2>
+        
+        <h3>Suchanfragen</h3>
+        <p>Wenn du eine Suche startest, wird deine Suchanfrage an unseren Server übermittelt, um Ergebnisse zu finden. Wir speichern Suchanfragen in anonymisierter Form (ohne IP-Adresse) in unserer Historie, um Trends zu erkennen (z.B. "Top Suchbegriffe") und die Qualität der Ergebnisse zu verbessern.</p>
+
+        <h3>Server-Log-Dateien</h3>
+        <p>Unser Server speichert automatisch Informationen, die dein Browser übermittelt (z.B. Browsertyp, Betriebssystem, Uhrzeit). IP-Adressen werden in Security-Logs erfasst, um Angriffe (z.B. DDoS, Brute-Force) abzuwehren. Diese Logs werden regelmäßig gelöscht.</p>
+
+        <h3>Qualitätssicherung ("Pogo-Sticking")</h3>
+        <p>Um unser Ranking zu verbessern, messen wir anonym, wie hilfreich ein Suchergebnis war. Wenn du auf ein Ergebnis klickst und sehr schnell wieder zurückkehrst ("Pogo-Sticking"), werten wir das als Signal, dass die Seite möglicherweise nicht relevant war. Diese Daten helfen uns, schlechte Ergebnisse in Zukunft abzuwerten.</p>
+
+        <h2>3. Nutzerkonto & Community-Funktionen</h2>
+        <p>Die Nutzung von Luma ist grundsätzlich ohne Konto möglich. Für bestimmte Funktionen ist eine Registrierung erforderlich.</p>
+
+        <h3>Registrierung</h3>
+        <p>Wenn du ein Konto erstellst, speichern wir:</p>
+        <ul>
+            <li><strong>E-Mail-Adresse:</strong> Zur Anmeldung und Kontowiederherstellung.</li>
+            <li><strong>Benutzername:</strong> Für die Anzeige im System.</li>
+            <li><strong>Passwort:</strong> Wird kryptografisch verschlüsselt (gehasht) gespeichert. Wir kennen dein Passwort nicht.</li>
+        </ul>
+
+        <h3>Community-Daten</h3>
+        <p>Wenn du eingeloggt bist, speichern wir deine Interaktionen, um sie deinem Konto zuzuordnen:</p>
+        <ul>
+            <li><strong>Trust-Votes:</strong> Deine Bewertungen (Positiv/Neutral/Negativ) für Domains.</li>
+            <li><strong>Blacklist & Whitelist:</strong> Deine persönlichen Filterregeln.</li>
+            <li><strong>Paywall-Meldungen:</strong> URLs, die du als Paywall gemeldet hast.</li>
+        </ul>
+
+        <h2>4. Lokale Speicherung (Local Storage)</h2>
+        <p>Wir verwenden keine Tracking-Cookies von Drittanbietern. Wir nutzen den lokalen Speicher deines Browsers ("Local Storage") für funktionale Zwecke:</p>
+        <ul>
+            <li><strong>Einstellungen:</strong> Dark Mode, Feature-Toggles (z.B. Taschenrechner an/aus).</li>
+            <li><strong>Quick Links:</strong> Deine gespeicherten Schnellzugriffe auf der Startseite.</li>
+            <li><strong>Session:</strong> Dein Anmeldestatus, damit du eingeloggt bleibst.</li>
+        </ul>
+
+        <h2>5. Externe Dienste</h2>
+        <p>Um dir ein besseres Erlebnis zu bieten, binden wir minimale externe Ressourcen ein:</p>
+        <ul>
+            <li><strong>Google Favicons:</strong> Um die kleinen Icons (Favicons) neben den Suchergebnissen anzuzeigen, nutzen wir einen Dienst von Google (<code>google.com/s2/favicons</code>). Dabei wird deine IP-Adresse an Google übertragen, damit das Bild geladen werden kann.</li>
+            <li><strong>OpenStreetMap:</strong> Bei Nutzung des <code>/map</code> Befehls leiten wir dich zu OpenStreetMap weiter.</li>
+        </ul>
+
+        <footer>
+            &copy; Luma Suche. Made with ❤️ for privacy.<br><br>
+            <a href="/impressum.html">Impressum</a>
+        </footer>
+    </div>
+</body>
+</html>

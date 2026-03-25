@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trust Details</title>
+    <style>
+        :root {
+            --bg: #0f0f11;
+            --surface: #1a1a1e;
+            --border: #35353a;
+            --text: #ededef;
+            --muted: #888898;
+            --accent: #7ba7f7;
+            --positive: #4caf50;
+            --neutral: #ff9800;
+            --negative: #f44336;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        h2 { margin-top: 0; font-size: 1.3rem; color: var(--text); word-break: break-all; }
+
+        /* ── Trust Score Card ── */
+        .score-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: border-color 0.3s;
+        }
+
+        .score-large {
+            font-size: 2.2rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .score-label  { color: var(--muted); font-size: 0.82rem; margin-bottom: 4px; }
+        .score-note   { color: var(--muted); font-size: 0.75rem; margin-top: 4px; }
+
+        /* ── Luma Score (algorithmisch) ── */
+        .algo-bar-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .algo-bar-label { font-size: 0.82rem; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+        .algo-bar-bg    { flex: 1; height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+        .algo-bar-fill  { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.4s; }
+        .algo-bar-val   { font-size: 0.82rem; font-weight: 600; color: var(--accent); white-space: nowrap; flex-shrink: 0; }
+
+        /* ── Votes section ── */
+        .votes-section h3 {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+            font-size: 0.95rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .vote-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-size: 0.92rem;
+        }
+
+        .vote-row .icon  { font-size: 1.2rem; width: 28px; text-align: center; }
+        .vote-row .rlabel { width: 65px; color: var(--muted); }
+
+        .vote-row .bar-bg {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border);
+            overflow: hidden;
+        }
+
+        .vote-row .bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+        .vote-row.pos .bar-fill { background: var(--positive); }
+        .vote-row.neu .bar-fill { background: var(--neutral); }
+        .vote-row.neg .bar-fill { background: var(--negative); }
+
+        .vote-row .count { width: 30px; text-align: right; font-weight: 600; font-size: 0.85rem; }
+        .vote-row.pos .count { color: var(--positive); }
+        .vote-row.neu .count { color: var(--neutral); }
+        .vote-row.neg .count { color: var(--negative); }
+
+        /* ── Vote buttons ── */
+        .vote-buttons { display: flex; gap: 8px; margin-top: 14px; }
+
+        .vote-btn {
+            flex: 1;
+            padding: 9px 6px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            line-height: 1;
+        }
+
+        .vote-btn .icon { font-size: 1.2rem; }
+
+        .vote-btn.pos:not(:disabled):hover, .vote-btn.pos.active {
+            background: rgba(76,175,80,.15); border-color: var(--positive); color: var(--positive);
+        }
+        .vote-btn.neu:not(:disabled):hover, .vote-btn.neu.active {
+            background: rgba(255,152,0,.15); border-color: var(--neutral); color: var(--neutral);
+        }
+        .vote-btn.neg:not(:disabled):hover, .vote-btn.neg.active {
+            background: rgba(244,67,54,.15); border-color: var(--negative); color: var(--negative);
+        }
+
+        .vote-btn:disabled { opacity: 0.5; cursor: default; }
+
+        .voted-label  { font-size: 0.78rem; color: var(--muted); text-align: center; margin-top: 8px; }
+        .vote-error   { display: none; color: var(--negative); font-size: 0.8rem; text-align: center; margin-top: 8px; }
+        .no-votes     { text-align: center; color: var(--muted); padding: 12px 0; font-size: 0.9rem; }
+        .loading-txt  { text-align: center; padding: 16px; color: var(--accent); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.45; }
+        }
+    </style>
+</head>
+<body>
+
+    <h2 id="domain-title">Lade...</h2>
+
+    <!-- Community Trust Score -->
+    <div class="score-card" id="score-card">
+        <div>
+            <div class="score-label">Community Trust Score</div>
+            <div class="score-large" id="trust-score" style="color:var(--muted)">–</div>
+            <div class="score-note" id="score-note">Noch keine Reaktionen</div>
+        </div>
+        <div style="text-align:right;">
+            <div id="trust-verdict" style="font-weight:600;font-size:1.05rem;color:var(--muted)">–</div>
+        </div>
+    </div>
+
+    <!-- Luma Algorithmus-Score (aus Crawler-Daten) -->
+    <div class="algo-bar-wrap" title="Echte Kennzahl — vom Luma-Crawler berechnet aus: Lesbarkeit, Domain-Alter, Werbedichte, Ladegeschwindigkeit, Linkqualität">
+        <span class="algo-bar-label">🤖 Luma Score</span>
+        <div class="algo-bar-bg">
+            <div class="algo-bar-fill" id="algo-bar" style="width:0%"></div>
+        </div>
+        <span class="algo-bar-val" id="algo-val">–/100</span>
+    </div>
+
+    <!-- Ranking-Einfluss der Community-Votes -->
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.82rem; display: flex; align-items: center; gap: 8px;">
+        <span style="color: var(--muted);">📊 Ranking-Einfluss:</span>
+        <span id="ranking-impact-val" style="font-weight: 600;">–</span>
+    </div>
+
+    <div class="votes-section">
+        <h3>Community-Reaktionen</h3>
+        <div id="votes-container">
+            <div class="loading-txt">Lade Reaktionen...</div>
+        </div>
+    </div>
+
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; margin-top: 20px; color: var(--muted); font-size: 0.9rem;">
+        Hat dir diese Seite geholfen?
+    </div>
+
+    <!-- Login-Hinweis (erscheint wenn nicht angemeldet und auf Vote-Button geklickt) -->
+    <div id="auth-hint" style="display:none; background:rgba(194,154,64,0.1); border:1px solid rgba(194,154,64,0.4); border-radius:8px; padding:10px 14px; text-align:center; font-size:13px; color:#ededef; margin-top:10px; line-height:1.6;">
+        Zum Reagieren bitte
+        <a href="/login.html" target="_blank" style="color:#C29A40;font-weight:600;text-decoration:none;">anmelden</a>
+        oder
+        <a href="/register.html" target="_blank" style="color:#C29A40;font-weight:600;text-decoration:none;">registrieren</a>
+        — kostenlos &amp; in 30 Sekunden.
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const domain           = params.get('domain');
+        const algoScore        = parseInt(params.get('score')      || 0);  // algorithmischer Score
+        const eat              = parseInt(params.get('eat')        || 0);
+        const communityModifier = parseInt(params.get('modifier')  || 0);
+        const approvalRating    = params.get('approvalRating') ? parseInt(params.get('approvalRating')) : null;
+        const totalVotes        = parseInt(params.get('totalVotes') || 0);
+        const MIN_VOTES         = 5;
+
+        document.getElementById('domain-title').textContent = domain || 'Unbekannte Domain';
+
+        // Luma Algorithmus-Score anzeigen (echt — aus Crawler-Daten)
+        // Kombination aus: E-A-T (Lesbarkeit, Struktur), Domain-Alter, SSL, Werbedichte, Ladezeit
+        const combinedAlgo = Math.round((algoScore + eat) / 2);
+        document.getElementById('algo-bar').style.width  = combinedAlgo + '%';
+        document.getElementById('algo-val').textContent  = combinedAlgo + '/100';
+
+        // Ranking-Einfluss der Community-Votes anzeigen
+        const impactEl = document.getElementById('ranking-impact-val');
+        if (totalVotes < MIN_VOTES) {
+            impactEl.textContent   = `Noch kein Einfluss (${totalVotes}/${MIN_VOTES} Abstimmungen nötig)`;
+            impactEl.style.color   = 'var(--muted)';
+        } else if (approvalRating !== null && approvalRating >= 70) {
+            impactEl.textContent   = `+${communityModifier || 2} Punkte im Ranking 🔼`;
+            impactEl.style.color   = 'var(--positive)';
+        } else if (approvalRating !== null && approvalRating < 40) {
+            impactEl.textContent   = `${communityModifier || -2} Punkte im Ranking 🔽`;
+            impactEl.style.color   = 'var(--negative)';
+        } else if (communityModifier > 0) {
+            impactEl.textContent   = `+${communityModifier} Punkte im Ranking 🔼`;
+            impactEl.style.color   = 'var(--positive)';
+        } else if (communityModifier < 0) {
+            impactEl.textContent   = `${communityModifier} Punkte im Ranking 🔽`;
+            impactEl.style.color   = 'var(--negative)';
+        } else {
+            impactEl.textContent   = 'Kein Einfluss (ausgeglichen)';
+            impactEl.style.color   = 'var(--muted)';
+        }
+
+        /* ── Community Trust Score aus Reaktionen berechnen ── */
+        function calcCommunityScore(positive, negative, total) {
+            if (total === 0 || (positive === 0 && negative === 0)) return null;
+            // Approval: wie viel % der bewertenden Nutzer reagierten positiv
+            return Math.round(positive / (positive + negative) * 100);
+        }
+
+        function updateScoreCard(score) {
+            const scoreEl   = document.getElementById('trust-score');
+            const verdictEl = document.getElementById('trust-verdict');
+            const noteEl    = document.getElementById('score-note');
+            const cardEl    = document.getElementById('score-card');
+
+            if (score === null) {
+                scoreEl.textContent   = '0%';
+                scoreEl.style.color   = 'var(--muted)';
+                verdictEl.textContent = '–';
+                verdictEl.style.color = 'var(--muted)';
+                noteEl.textContent    = 'Startet bei 0 — wächst mit 👍 Reaktionen';
+                cardEl.style.borderColor = 'var(--border)';
+                return;
+            }
+
+            scoreEl.textContent = score + '%';
+
+            if (score >= 70) {
+                scoreEl.style.color      = 'var(--positive)';
+                verdictEl.textContent    = 'Vertrauenswürdig';
+                verdictEl.style.color    = 'var(--positive)';
+                cardEl.style.borderColor = 'var(--positive)';
+                noteEl.textContent       = 'Mehrheit der Nutzer reagierte positiv';
+            } else if (score >= 40) {
+                scoreEl.style.color      = 'var(--neutral)';
+                verdictEl.textContent    = 'Gemischt';
+                verdictEl.style.color    = 'var(--neutral)';
+                cardEl.style.borderColor = 'var(--neutral)';
+                noteEl.textContent       = 'Geteilte Meinungen';
+            } else {
+                scoreEl.style.color      = 'var(--negative)';
+                verdictEl.textContent    = 'Kritisch';
+                verdictEl.style.color    = 'var(--negative)';
+                cardEl.style.borderColor = 'var(--negative)';
+                noteEl.textContent       = 'Mehrheit der Nutzer reagierte negativ';
+            }
+        }
+
+        /* ── Vote-State (localStorage) ── */
+        function getVotedDomains() {
+            try { return JSON.parse(localStorage.getItem('luma_voted_domains') || '{}'); } catch { return {}; }
+        }
+        function markVoted(d, type) {
+            const v = getVotedDomains(); v[d] = type;
+            localStorage.setItem('luma_voted_domains', JSON.stringify(v));
+        }
+        function clearVote(d) {
+            try { const v = getVotedDomains(); delete v[d]; localStorage.setItem('luma_voted_domains', JSON.stringify(v)); } catch {}
+        }
+        function hasVoted(d) { return getVotedDomains()[d] || null; }
+
+        function labelOf(type) {
+            return { positive: '👍 Positiv', neutral: '😐 Neutral', negative: '👎 Negativ' }[type] || type;
+        }
+
+        /* ── Votes rendern + Score aktualisieren ── */
+        function renderVotes(data) {
+            const container = document.getElementById('votes-container');
+            // Stelle sicher, dass data ein Objekt ist
+            if (!data || typeof data !== 'object') {
+                data = { approvalRating: null, totalVotes: 0 };
+            }
+            const { approvalRating = null, totalVotes = 0 } = data;
+            const voted = hasVoted(domain);
+
+            // Trust Score aus Reaktionen berechnen
+            updateScoreCard(approvalRating);
+
+            const disabledAttr = '';
+            const votedHint    = voted
+                ? `<div class="voted-label">Deine Reaktion: ${labelOf(voted)}</div>`
+                : '';
+
+            container.innerHTML = `
+                ${totalVotes === 0 ? '<div class="no-votes">Noch keine Community-Abstimmungen</div>' : ''}
+
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                    <span style="font-size:24px;">👥</span>
+                    <div style="flex:1;">
+                        <div style="font-size:13px;color:#e8eaed;margin-bottom:4px;">Community-Bewertung</div>
+                        <div style="display:flex;align-items:baseline;gap:8px;">
+                            <div style="font-size:28px;font-weight:700;color:${approvalRating === null ? '#5f6368' : approvalRating >= 70 ? '#4caf50' : approvalRating >= 40 ? '#ff9800' : '#f44336'};">${approvalRating === null ? '–' : approvalRating + '%'}</div>
+                            <div style="font-size:12px;color:#9aa0a6;">${totalVotes} Abstimmung${totalVotes !== 1 ? 'en' : ''}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                ${approvalRating !== null ? `
+                <div style="height:12px;background:#303134;border-radius:6px;overflow:hidden;margin:12px 0;">
+                    <div style="width:${approvalRating}%;height:100%;background:${approvalRating >= 70 ? '#4caf50' : approvalRating >= 40 ? '#ff9800' : '#f44336'};border-radius:6px;transition:width 0.5s;"></div>
+                </div>` : ''}
+
+                <div class="vote-buttons" id="popup-btns">
+                    <button class="vote-btn pos ${voted === 'positive' ? 'active' : ''}" ${disabledAttr}
+                        data-type="positive" onclick="submitVote(this)">
+                        <span class="icon">👍</span>Positiv
+                    </button>
+                    <button class="vote-btn neu ${voted === 'neutral' ? 'active' : ''}" ${disabledAttr}
+                        data-type="neutral" onclick="submitVote(this)">
+                        <span class="icon">😐</span>Neutral
+                    </button>
+                    <button class="vote-btn neg ${voted === 'negative' ? 'active' : ''}" ${disabledAttr}
+                        data-type="negative" onclick="submitVote(this)">
+                        <span class="icon">👎</span>Negativ
+                    </button>
+                </div>
+                ${votedHint}
+                <div id="vote-error" class="vote-error"></div>
+            `;
+        }
+
+        fetch(`/api/votes?domain=${encodeURIComponent(domain)}`)
+            .then(r => r.json())
+            .then(renderVotes)
+            .catch(() => {
+                updateScoreCard(null);
+                document.getElementById('votes-container').innerHTML =
+                    '<div class="no-votes" style="color:var(--negative)">Fehler beim Laden.</div>';
+            });
+
+        /* ── Auth-Check (einmalig gecacht) ── */
+        let _authStatus = null;
+        async function checkLoggedIn() {
+            if (_authStatus !== null) return _authStatus;
+            try {
+                const r = await fetch('/api/auth/me');
+                const d = await r.json();
+                _authStatus = d.loggedIn;
+            } catch { _authStatus = false; }
+            return _authStatus;
+        }
+
+        /* ── Vote abschicken ── */
+        async function submitVote(btn) {
+            const type = btn.getAttribute('data-type');
+            if (!type) return;
+
+            // Login prüfen — nicht angemeldet = Hinweis zeigen
+            const loggedIn = await checkLoggedIn();
+            if (!loggedIn) {
+                const hint = document.getElementById('auth-hint');
+                if (hint) {
+                    hint.style.display = 'block';
+                    hint.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                return;
+            }
+
+            const btns = document.querySelectorAll('#popup-btns .vote-btn');
+            btns.forEach(b => { b.disabled = true; });
+            btn.style.animation = 'pulse 0.8s ease-in-out infinite';
+
+            try {
+                const res = await fetch('/api/votes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ domain, type })
+                });
+
+                if (!res.ok) throw new Error(`Server antwortet mit ${res.status}`);
+
+                const data = await res.json();
+
+                if (data.success) {
+                    if (data.action === 'removed') {
+                        clearVote(domain);
+                    } else {
+                        markVoted(domain, type);
+                    }
+                    btn.style.animation = '';
+                    // Neue Approval-Rating Daten
+                    const votesData = {
+                        approvalRating: data.approvalRating !== undefined ? data.approvalRating : null,
+                        totalVotes: data.totalVotes || 0
+                    };
+                    renderVotes(votesData);
+                } else {
+                    throw new Error(data.error || 'Fehler');
+                }
+            } catch (e) {
+                btn.style.animation = '';
+                btns.forEach(b => { b.disabled = false; });
+                const errEl = document.getElementById('vote-error');
+                if (errEl) {
+                    errEl.textContent = '❌ ' + e.message;
+                    errEl.style.display = 'block';
+                    setTimeout(() => { errEl.style.display = 'none'; }, 3000);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meine Filter – Luma</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:       #0f0f11;
+            --surface:  #1a1a1e;
+            --surface2: #242428;
+            --border:   #35353a;
+            --text:     #ededef;
+            --muted:    #888898;
+            --accent:   #C29A40;
+            --negative: #f44336;
+            --positive: #4caf50;
+            --whitelist:#3b82f6;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .blob { position: fixed; border-radius: 50%; filter: blur(90px); z-index: -1; pointer-events: none; }
+        .blob-1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(194,154,64,0.07) 0%, transparent 70%); top: -200px; left: -200px; }
+        .blob-2 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(123,167,247,0.05) 0%, transparent 70%); bottom: -150px; right: -150px; }
+
+        .page { max-width: 720px; margin: 0 auto; }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 36px;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .logo { font-size: 26px; font-weight: 700; color: var(--text); text-decoration: none; }
+        .logo span { color: var(--accent); }
+
+        .header-right { display: flex; align-items: center; gap: 12px; }
+
+        .user-badge {
+            font-size: 13px;
+            color: var(--muted);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 8px;
+        }
+
+        .btn-logout {
+            font-size: 13px;
+            color: var(--muted);
+            background: transparent;
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .btn-logout:hover { border-color: var(--negative); color: var(--negative); }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 28px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 16px;
+            background: transparent;
+            border: none;
+            border-radius: 9px;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+        }
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active {
+            background: var(--surface2);
+            color: var(--text);
+        }
+        .tab-btn.active.bl { color: var(--negative); }
+        .tab-btn.active.wl { color: var(--whitelist); }
+
+        /* Section heading */
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 14px;
+            margin-bottom: 26px;
+            line-height: 1.6;
+        }
+
+        /* Add-Form */
+        .add-form {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 28px;
+        }
+
+        .add-form label {
+            display: block;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-row input {
+            flex: 1;
+            padding: 12px 14px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .input-row input::placeholder { color: var(--muted); }
+
+        #bl-input:focus  { border-color: var(--negative); }
+        #wl-input:focus  { border-color: var(--whitelist); }
+
+        .btn-add {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: inherit;
+            white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+        .btn-add:hover { opacity: 0.88; }
+        .btn-add:disabled { opacity: 0.5; cursor: default; }
+        .btn-add.bl { background: var(--negative); color: #fff; }
+        .btn-add.wl { background: var(--whitelist); color: #fff; }
+
+        .form-hint {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 8px;
+        }
+
+        /* Whitelist-Toggle-Karte */
+        .wl-toggle-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .wl-toggle-card.active-card {
+            border-color: rgba(59,130,246,0.5);
+            background: rgba(59,130,246,0.05);
+        }
+        .wl-toggle-info { flex: 1; }
+        .wl-toggle-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .wl-toggle-desc {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+        .wl-status-badge {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .wl-status-badge.on  { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+        .wl-status-badge.off { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+        /* Toggle-Switch */
+        .toggle-switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute;
+            inset: 0;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 34px;
+            cursor: pointer;
+            transition: background 0.25s, border-color 0.25s;
+        }
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background: var(--muted);
+            border-radius: 50%;
+            transition: transform 0.25s, background 0.25s;
+        }
+        .toggle-switch input:checked + .toggle-slider { background: rgba(59,130,246,0.25); border-color: #3b82f6; }
+        .toggle-switch input:checked + .toggle-slider::before { transform: translateX(24px); background: #3b82f6; }
+
+        /* Whitelist-Hinweis */
+        .wl-notice {
+            background: rgba(59,130,246,0.06);
+            border: 1px solid rgba(59,130,246,0.2);
+            border-radius: 10px;
+            padding: 11px 15px;
+            font-size: 13px;
+            color: #93c5fd;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        /* Feedback */
+        .feedback {
+            font-size: 13px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+        .feedback.error   { background: rgba(244,67,54,0.1);  border: 1px solid var(--negative); color: var(--negative); display: block; }
+        .feedback.success { background: rgba(76,175,80,0.1);  border: 1px solid var(--positive); color: var(--positive); display: block; }
+
+        /* Liste */
+        .list-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .list-title { font-size: 15px; font-weight: 600; }
+
+        .count-badge {
+            font-size: 12px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            padding: 3px 10px;
+            border-radius: 20px;
+            color: var(--muted);
+        }
+
+        .item-list { display: flex; flex-direction: column; gap: 8px; }
+
+        .list-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: border-color 0.2s;
+        }
+        .list-item:hover { border-color: #4a4a52; }
+
+        .item-icon { font-size: 18px; flex-shrink: 0; opacity: 0.7; }
+
+        .item-url {
+            flex: 1;
+            font-size: 14px;
+            color: var(--text);
+            word-break: break-all;
+            line-height: 1.4;
+        }
+
+        .item-date {
+            font-size: 11px;
+            color: var(--muted);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .btn-delete {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 5px 10px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: inherit;
+            flex-shrink: 0;
+            transition: border-color 0.15s, color 0.15s, background 0.15s;
+        }
+        .btn-delete:hover {
+            border-color: var(--negative);
+            color: var(--negative);
+            background: rgba(244,67,54,0.08);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--muted);
+        }
+        .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.5; }
+        .empty-state p { font-size: 14px; line-height: 1.6; }
+
+        .loading-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 28px;
+            color: var(--muted);
+            font-size: 13px;
+            text-decoration: none;
+        }
+        .back-link:hover { color: var(--text); }
+
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #2a2a2e;
+            color: var(--text);
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            opacity: 0;
+            transition: opacity 0.25s, transform 0.25s;
+            pointer-events: none;
+            z-index: 9999;
+            white-space: nowrap;
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        #toast.success { border-color: var(--positive); color: var(--positive); }
+        #toast.error   { border-color: var(--negative); color: var(--negative); }
+
+        /* Tab-Panel */
+        .panel { display: none; }
+        .panel.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div id="toast"></div>
+
+    <div class="page">
+        <header>
+            <a href="/" class="logo">L<span>u</span>ma</a>
+            <div class="header-right">
+                <span class="user-badge" id="user-badge">Lädt...</span>
+                <button class="btn-logout" id="btn-logout">Abmelden</button>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn bl active" onclick="switchTab('blacklist')">
+                🚫 Blacklist
+            </button>
+            <button class="tab-btn wl" onclick="switchTab('whitelist')">
+                ✅ Whitelist
+            </button>
+        </div>
+
+        <!-- ── BLACKLIST PANEL ─────────────────────────────────── -->
+        <div class="panel active" id="panel-blacklist">
+            <h1 class="section-title">🚫 Meine Blacklist</h1>
+            <p class="subtitle">
+                Domains in dieser Liste werden in deinen Suchergebnissen vollständig ausgeblendet.<br>
+                Nur du siehst diese Liste — sie gilt persönlich für deinen Account.
+            </p>
+
+            <div class="add-form">
+                <label for="bl-input">Domain zur Blacklist hinzufügen</label>
+                <div class="input-row">
+                    <input type="text" id="bl-input" placeholder="z.B. example.com oder spam-seite.de" autocomplete="off">
+                    <button class="btn-add bl" id="bl-btn" onclick="blAdd()">Sperren</button>
+                </div>
+                <p class="form-hint">Gib die Domain ein, die du aus deinen Ergebnissen entfernen möchtest.</p>
+                <div class="feedback" id="bl-feedback"></div>
+            </div>
+
+            <div class="list-header">
+                <span class="list-title">Gesperrte Domains</span>
+                <span class="count-badge" id="bl-count">0 Einträge</span>
+            </div>
+            <div id="bl-list"><div class="loading-state">Lade Blacklist...</div></div>
+        </div>
+
+        <!-- ── WHITELIST PANEL ─────────────────────────────────── -->
+        <div class="panel" id="panel-whitelist">
+            <h1 class="section-title">✅ Meine Whitelist</h1>
+            <p class="subtitle">
+                Nur Domains in dieser Liste erscheinen in deinen Suchergebnissen — wenn der Filter aktiv ist.<br>
+                <strong>Ohne Aktivierung</strong> hat die Liste keinen Effekt.
+            </p>
+
+            <!-- Aktivierungs-Toggle -->
+            <div class="wl-toggle-card" id="wl-toggle-card">
+                <div class="wl-toggle-info">
+                    <div class="wl-toggle-title">
+                        Whitelist-Filter
+                        <span class="wl-status-badge off" id="wl-status-badge">Inaktiv</span>
+                    </div>
+                    <div class="wl-toggle-desc" id="wl-toggle-desc">
+                        Filter ist deaktiviert — alle Suchergebnisse werden angezeigt.
+                    </div>
+                </div>
+                <label class="toggle-switch" title="Whitelist aktivieren">
+                    <input type="checkbox" id="wl-toggle-input" onchange="toggleWhitelist(this.checked)">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <div class="wl-notice">
+                ℹ️ Wenn aktiviert, siehst du <strong>nur Ergebnisse von eingetragenen Domains</strong>. Trage hier nur Seiten ein, denen du vertraust — sonst können Suchergebnisse komplett leer sein.
+            </div>
+
+            <div class="add-form">
+                <label for="wl-input">Domain zur Whitelist hinzufügen</label>
+                <div class="input-row">
+                    <input type="text" id="wl-input" placeholder="z.B. wikipedia.org oder heise.de" autocomplete="off">
+                    <button class="btn-add wl" id="wl-btn" onclick="wlAdd()">Erlauben</button>
+                </div>
+                <p class="form-hint">Nur Ergebnisse von eingetragenen Domains werden angezeigt.</p>
+                <div class="feedback" id="wl-feedback"></div>
+            </div>
+
+            <div class="list-header">
+                <span class="list-title">Erlaubte Domains</span>
+                <span class="count-badge" id="wl-count">0 Einträge</span>
+            </div>
+            <div id="wl-list"><div class="loading-state">Lade Whitelist...</div></div>
+        </div>
+
+        <a href="/" class="back-link">← Zurück zur Suche</a>
+    </div>
+
+    <script>
+        // ── Toast ──────────────────────────────────────────────
+        let toastTimer = null;
+        function showToast(msg, type = '') {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = 'show ' + type;
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => { el.className = ''; }, 2800);
+        }
+
+        // ── Tab-Switching ──────────────────────────────────────
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelector(`.tab-btn.${tab === 'blacklist' ? 'bl' : 'wl'}`).classList.add('active');
+            document.getElementById(`panel-${tab}`).classList.add('active');
+        }
+
+        // ── Auth-Check ─────────────────────────────────────────
+        async function checkAuth() {
+            const res  = await fetch('/api/auth/me');
+            const data = await res.json();
+            if (!data.loggedIn) {
+                window.location.href = '/login.html?redirect=/my-blacklist.html';
+                return;
+            }
+            document.getElementById('user-badge').textContent = data.email;
+        }
+
+        document.getElementById('btn-logout').addEventListener('click', async () => {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/';
+        });
+
+        // ── Hilfsfunktionen ────────────────────────────────────
+        function escHtml(str) {
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '';
+            return new Date(iso).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+        }
+
+        // Normalisiert Eingabe zur Domain (entfernt Protokoll, Pfade, www)
+        function normalizeDomain(input) {
+            let s = input.trim();
+            if (!s.startsWith('http')) s = 'https://' + s;
+            try {
+                return new URL(s).hostname.replace(/^www\./, '');
+            } catch {
+                return input.trim().replace(/^www\./, '');
+            }
+        }
+
+        // ── BLACKLIST ──────────────────────────────────────────
+        async function blLoad() {
+            try {
+                const res  = await fetch('/api/blacklist');
+                const data = await res.json();
+                renderList('bl', data.items || [], '🚫', 'blDelete',
+                    'Deine Blacklist ist leer.<br>Füge oben eine Domain hinzu, um sie auszublenden.');
+            } catch {
+                document.getElementById('bl-list').innerHTML =
+                    '<div class="empty-state"><div class="icon">⚠️</div><p>Fehler beim Laden.</p></div>';
+            }
+        }
+
+        async function blAdd() {
+            const input = document.getElementById('bl-input');
+            const btn   = document.getElementById('bl-btn');
+            const fb    = document.getElementById('bl-feedback');
+            const raw   = input.value.trim();
+
+            fb.className = 'feedback';
+            if (!raw) { fb.textContent = 'Bitte eine Domain eingeben.'; fb.className = 'feedback error'; return; }
+
+            const domain = normalizeDomain(raw);
+            btn.disabled = true; btn.textContent = 'Wird gesperrt...';
+
+            try {
+                const res  = await fetch('/api/blacklist', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: domain })
+                });
+                const data = await res.json();
+                if (data.success) { input.value = ''; showToast('Domain gesperrt!', 'success'); blLoad(); }
+                else { fb.textContent = data.error || 'Fehler.'; fb.className = 'feedback error'; }
+            } catch {
+                fb.textContent = 'Verbindungsfehler.'; fb.className = 'feedback error';
+            } finally {
+                btn.disabled = false; btn.textContent = 'Sperren';
+            }
+        }
+
+        async function blDelete(id) {
+            try {
+                const res  = await fetch(`/api/blacklist/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) { showToast('Entsperrt.', 'success'); blLoad(); }
+                else showToast(data.error || 'Fehler.', 'error');
+            } catch { showToast('Verbindungsfehler.', 'error'); }
+        }
+
+        document.getElementById('bl-input').addEventListener('keydown', e => { if (e.key === 'Enter') blAdd(); });
+
+        // ── WHITELIST TOGGLE ───────────────────────────────────
+        async function loadWhitelistToggle() {
+            try {
+                const res  = await fetch('/api/user/preferences');
+                const data = await res.json();
+                const active = data.preferences?.whitelist_aktiv === true;
+                setToggleUI(active);
+            } catch { /* ignorieren */ }
+        }
+
+        function setToggleUI(active) {
+            const input  = document.getElementById('wl-toggle-input');
+            const badge  = document.getElementById('wl-status-badge');
+            const card   = document.getElementById('wl-toggle-card');
+            const desc   = document.getElementById('wl-toggle-desc');
+
+            input.checked = active;
+            if (active) {
+                badge.textContent = 'Aktiv';
+                badge.className = 'wl-status-badge on';
+                card.classList.add('active-card');
+                desc.textContent = 'Filter ist aktiv — nur Domains aus deiner Liste werden angezeigt.';
+            } else {
+                badge.textContent = 'Inaktiv';
+                badge.className = 'wl-status-badge off';
+                card.classList.remove('active-card');
+                desc.textContent = 'Filter ist deaktiviert — alle Suchergebnisse werden angezeigt.';
+            }
+        }
+
+        async function toggleWhitelist(requested) {
+            // Erst zurücksetzen — UI nur nach bestätigtem Server-Save aktualisieren
+            const input = document.getElementById('wl-toggle-input');
+            input.disabled = true;
+            try {
+                const res  = await fetch('/api/user/preferences', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ whitelist_aktiv: requested })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Fehler');
+                // UI erst nach Bestätigung setzen
+                const saved = data.preferences?.whitelist_aktiv === true;
+                setToggleUI(saved);
+                showToast(saved ? 'Whitelist-Filter aktiviert.' : 'Whitelist-Filter deaktiviert.', saved ? 'success' : '');
+            } catch (err) {
+                // Fehler: Toggle-Zustand vom Server neu laden (Rollback)
+                showToast('Fehler beim Speichern — wird zurückgesetzt.', 'error');
+                await loadWhitelistToggle();
+            } finally {
+                input.disabled = false;
+            }
+        }
+
+        // ── WHITELIST ──────────────────────────────────────────
+        async function wlLoad() {
+            try {
+                const res  = await fetch('/api/whitelist');
+                const data = await res.json();
+                renderList('wl', data.items || [], '✅', 'wlDelete',
+                    'Deine Whitelist ist leer.<br>Alle Domains werden angezeigt (keine Einschränkung).');
+            } catch {
+                document.getElementById('wl-list').innerHTML =
+                    '<div class="empty-state"><div class="icon">⚠️</div><p>Fehler beim Laden.</p></div>';
+            }
+        }
+
+        async function wlAdd() {
+            const input = document.getElementById('wl-input');
+            const btn   = document.getElementById('wl-btn');
+            const fb    = document.getElementById('wl-feedback');
+            const raw   = input.value.trim();
+
+            fb.className = 'feedback';
+            if (!raw) { fb.textContent = 'Bitte eine Domain eingeben.'; fb.className = 'feedback error'; return; }
+
+            const domain = normalizeDomain(raw);
+            btn.disabled = true; btn.textContent = 'Wird hinzugefügt...';
+
+            try {
+                const res  = await fetch('/api/whitelist', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: domain })
+                });
+                const data = await res.json();
+                if (data.success) { input.value = ''; showToast('Domain erlaubt!', 'success'); wlLoad(); }
+                else { fb.textContent = data.error || 'Fehler.'; fb.className = 'feedback error'; }
+            } catch {
+                fb.textContent = 'Verbindungsfehler.'; fb.className = 'feedback error';
+            } finally {
+                btn.disabled = false; btn.textContent = 'Erlauben';
+            }
+        }
+
+        async function wlDelete(id) {
+            try {
+                const res  = await fetch(`/api/whitelist/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) { showToast('Entfernt.', 'success'); wlLoad(); }
+                else showToast(data.error || 'Fehler.', 'error');
+            } catch { showToast('Verbindungsfehler.', 'error'); }
+        }
+
+        document.getElementById('wl-input').addEventListener('keydown', e => { if (e.key === 'Enter') wlAdd(); });
+
+        // ── Render-Helfer (shared) ─────────────────────────────
+        function renderList(prefix, items, icon, deleteFn, emptyMsg) {
+            const container = document.getElementById(`${prefix}-list`);
+            const badge     = document.getElementById(`${prefix}-count`);
+
+            badge.textContent = items.length === 1 ? '1 Eintrag' : `${items.length} Einträge`;
+
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">${icon}</div>
+                        <p>${emptyMsg}</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = '<div class="item-list">' +
+                items.map(item => `
+                    <div class="list-item" id="${prefix}-item-${item.id}">
+                        <span class="item-icon">${icon}</span>
+                        <span class="item-url">${escHtml(item.url_muster)}</span>
+                        <span class="item-date">${formatDate(item.erstellt_am || item.created_at)}</span>
+                        <button class="btn-delete" onclick="${deleteFn}(${item.id})">Entfernen</button>
+                    </div>`).join('') +
+                '</div>';
+        }
+
+        // ── Init ───────────────────────────────────────────────
+        checkAuth();
+        blLoad();
+        wlLoad();
+        loadWhitelistToggle();
+    </script>
+</body>
+</html>

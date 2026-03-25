@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Über Luma</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:       #0f0f11;
+            --surface:  #1a1a1e;
+            --surface2: #242428;
+            --border:   #35353a;
+            --text:     #ededef;
+            --muted:    #888898;
+            --accent:   #C29A40;
+            --accent-glow: rgba(194, 154, 64, 0.2);
+            --shadow-color: rgba(0, 0, 0, 0.5);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(ellipse at top, #212125, var(--bg) 60%);
+            color: var(--text); 
+            line-height: 1.6;
+            padding: 40px 20px 80px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        a {
+            color: var(--accent);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--accent);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            color: var(--text);
+        }
+
+        p {
+            margin-bottom: 15px;
+            color: #ccc;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 40px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--text); }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            margin-bottom: 80px;
+            animation: fadeIn 0.6s ease-out;
+        }
+        .hero h1 {
+            font-size: clamp(2.8rem, 6vw, 4rem);
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text);
+            letter-spacing: -1.5px;
+        }
+        .hero h1 span {
+            background: linear-gradient(45deg, var(--accent), #e7c375);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--muted);
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        /* Mission Box */
+        .mission {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 70px;
+            box-shadow: 0 20px 40px -15px var(--shadow-color);
+        }
+        .mission h2 { font-size: 1.8rem; margin-bottom: 16px; color: var(--text); }
+        .mission p { max-width: 700px; margin: 0 auto; font-size: 1.05rem; color: #ccc; }
+
+        /* Feature Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 28px;
+            margin-bottom: 70px;
+        }
+        .card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            padding: 32px;
+            border-radius: 16px;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 10px 25px -5px var(--shadow-color), 0 0 0 1px var(--accent);
+        }
+        .card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 12px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .card p {
+            color: var(--muted);
+            font-size: 0.95rem;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .card a { text-decoration: none; }
+        .card a:hover { text-decoration: underline; }
+        .icon { font-size: 1.6rem; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        footer {
+            margin-top: 80px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <a href="/" class="back-link">← Zurück zur Startseite</a>
+
+        <div class="hero">
+            <h1>Über <span>Luma</span></h1>
+            <p>Die Suchmaschine, die dir gehört. Privat, transparent und von der Community gesteuert.</p>
+        </div>
+
+        <div class="mission">
+            <h2>Unsere Mission</h2>
+            <p>Das Internet ist voller Tracker und lauter Werbung. Luma ist dein sauberer Startpunkt. Wir glauben an eine Suche, die dir dient – nicht den Werbetreibenden. Wir verfolgen dich nicht, wir verändern keine Links und wir verkaufen deine Daten nicht. Mit transparenter Technologie und der Kraft der Gemeinschaft bauen wir einen ehrlicheren Index für das Web.</p>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3><span class="icon">🛡️</span> Privatsphäre zuerst</h3>
+                <p>Kein Tracking, keine Profile, keine Weitergabe deiner Daten. Deine Suchanfragen sind verschlüsselt und gehören nur dir. Wir wissen nicht, wer du bist, und das wollen wir auch gar nicht.</p>
+            </div>
+            <div class="card">
+                <h3><span class="icon">🤝</span> Community Power</h3>
+                <p>Luma lernt von seinen Nutzern. Über das Trust Center bewertet die Community Websites, meldet Paywalls und blockiert Spam. Gemeinsam machen wir die Ergebnisse jeden Tag besser.</p>
+            </div>
+            <div class="card">
+                <h3><span class="icon">🧠</span> Semantische KI</h3>
+                <p>Wir suchen nicht nur nach Stichworten. Unsere semantische KI versteht den Sinn deiner Frage und findet relevante Antworten, auch wenn die exakten Worte nicht auf der Seite stehen.</p>
+            </div>
+            <div class="card">
+                <h3><span class="icon">⚖️</span> Domain Diversity</h3>
+                <p>Schluss mit Monopolen. Unser Algorithmus sorgt für Vielfalt in den Suchergebnissen, damit nicht immer dieselben großen Konzerne die erste Seite dominieren.</p>
+            </div>
+            <div class="card">
+                <h3><span class="icon">⚡</span> Instant Answers</h3>
+                <p>Wetter, Währungen, Definitionen oder Rechenaufgaben – Luma liefert dir direkte Antworten, ohne dass du klicken musst. Schnell und effizient.</p>
+            </div>
+            <div class="card">
+                <h3><span class="icon">🚫</span> Deine Regeln</h3>
+                <p>Erstelle deine persönliche Blacklist, um nervige Seiten dauerhaft auszublenden. Oder nutze die Whitelist für einen fokussierten Tunnelblick. Du hast die Kontrolle.</p>
+            </div>
+            <div class="card">
+                <h3><span class="icon">📜</span> Offener Algorithmus</h3>
+                <p>Keine Blackbox. Wir legen offen, wie unsere Suchergebnisse zustande kommen. Lies die <a href="/algorithmus.html">vollständige Erklärung</a>, um zu verstehen, wie Luma denkt.</p>
+            </div>
+        </div>
+
+        <footer>
+            &copy; Luma Suche. Made with ❤️ for privacy.
+        </footer>
+    </div>
+</body>
+</html>

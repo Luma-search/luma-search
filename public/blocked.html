@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockierte Domains – Luma</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:       #0f0f11;
+            --surface:  #1a1a1e;
+            --surface2: #242428;
+            --border:   #35353a;
+            --text:     #ededef;
+            --muted:    #888898;
+            --accent:   #C29A40;
+            --negative: #f44336;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 40px 20px 60px;
+        }
+
+        .blob { position: fixed; border-radius: 50%; filter: blur(90px); z-index: -1; pointer-events: none; }
+        .blob-1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(244,67,54,0.06) 0%, transparent 70%); top: -200px; right: -150px; }
+        .blob-2 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(194,154,64,0.05) 0%, transparent 70%); bottom: -150px; left: -150px; }
+
+        .page { max-width: 760px; margin: 0 auto; }
+
+        /* Header */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .logo { font-size: 26px; font-weight: 700; color: var(--text); text-decoration: none; }
+        .logo span { color: var(--accent); }
+
+        .refresh-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 13px;
+            color: var(--muted);
+            background: transparent;
+            border: 1px solid var(--border);
+            padding: 7px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .refresh-btn svg { transition: transform 0.4s; }
+        .refresh-btn.spinning svg { transform: rotate(360deg); }
+
+        /* Title row */
+        .title-row { margin-bottom: 28px; }
+
+        h1 {
+            font-size: 1.65rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Live badge */
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #4caf50;
+            background: rgba(76,175,80,0.1);
+            border: 1px solid rgba(76,175,80,0.28);
+            padding: 3px 9px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .live-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        /* Stats bar */
+        .stats-bar {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+        }
+
+        .stat-pill {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 18px;
+            flex: 1;
+            min-width: 130px;
+        }
+
+        .stat-pill-label {
+            font-size: 11.5px;
+            color: var(--muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+
+        .stat-pill-val {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1;
+        }
+
+        .stat-pill-val.accent { color: var(--accent); }
+
+        /* Updated at */
+        .updated-at {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 20px;
+        }
+
+        /* Search filter */
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .filter-input {
+            flex: 1;
+            padding: 11px 14px;
+            background: var(--surface2);
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .filter-input:focus { border-color: var(--accent); }
+        .filter-input::placeholder { color: var(--muted); }
+
+        /* Table */
+        .table-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 40px 1fr 120px 90px;
+            gap: 12px;
+            padding: 12px 20px;
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        #table-body { }
+
+        .domain-row {
+            display: grid;
+            grid-template-columns: 40px 1fr 120px 90px;
+            gap: 12px;
+            padding: 13px 20px;
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+            transition: background 0.12s;
+            animation: rowIn 0.2s ease both;
+        }
+        @keyframes rowIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
+        .domain-row:last-child { border-bottom: none; }
+        .domain-row:hover { background: var(--surface2); }
+
+        .row-rank {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted);
+            text-align: center;
+        }
+        .row-rank.top-3 { color: var(--accent); }
+
+        .row-domain {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .favicon {
+            width: 22px;
+            height: 22px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            background: var(--surface2);
+        }
+
+        .domain-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .domain-link {
+            font-size: 11.5px;
+            color: var(--muted);
+            text-decoration: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+            margin-top: 1px;
+        }
+        .domain-link:hover { color: var(--accent); }
+
+        /* Bar cell */
+        .row-bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .row-bar-bg {
+            flex: 1;
+            height: 5px;
+            border-radius: 3px;
+            background: var(--border);
+            overflow: hidden;
+        }
+        .row-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: var(--negative);
+            transition: width 0.5s ease;
+        }
+        .row-bar-fill.rank-1 { background: #f44336; }
+        .row-bar-fill.rank-2 { background: #e57373; }
+        .row-bar-fill.rank-3 { background: #ef9a9a; }
+
+        /* Count */
+        .row-count {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--text);
+            text-align: right;
+        }
+        .row-count small {
+            display: block;
+            font-size: 11px;
+            font-weight: 400;
+            color: var(--muted);
+        }
+
+        /* Empty / error / loading states */
+        .state-box {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+        .state-box .icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.5; }
+        .state-box p    { font-size: 14px; line-height: 1.6; }
+
+        .skeleton-row {
+            display: grid;
+            grid-template-columns: 40px 1fr 120px 90px;
+            gap: 12px;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+        }
+        .sk {
+            border-radius: 5px;
+            background: linear-gradient(90deg, var(--surface2) 25%, #2e2e34 50%, var(--surface2) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+        }
+        @keyframes shimmer { to { background-position: -200% 0; } }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 28px;
+            color: var(--muted);
+            font-size: 13px;
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+        .back-link:hover { color: var(--text); }
+
+        /* Mobile */
+        @media (max-width: 560px) {
+            .table-header,
+            .domain-row,
+            .skeleton-row {
+                grid-template-columns: 30px 1fr 80px;
+            }
+            .table-header > :last-child,
+            .domain-row   > :last-child,
+            .skeleton-row > :last-child { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="page">
+        <header>
+            <a href="/" class="logo">L<span>u</span>ma</a>
+            <button class="refresh-btn" id="refresh-btn" onclick="loadStats(true)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+                Aktualisieren
+            </button>
+        </header>
+
+        <div class="title-row">
+            <h1>
+                🚫 Blockierte Domains
+                <span class="live-badge"><span class="live-dot"></span>Live</span>
+            </h1>
+            <p class="subtitle">
+                Alle von Luma-Nutzern blockierten Domains — zusammengerechnet über alle Konten.<br>
+                Wird alle 30 Sekunden automatisch aktualisiert.
+            </p>
+        </div>
+
+        <!-- Stats pills -->
+        <div class="stats-bar">
+            <div class="stat-pill">
+                <div class="stat-pill-label">Unique Domains</div>
+                <div class="stat-pill-val accent" id="stat-domains">–</div>
+            </div>
+            <div class="stat-pill">
+                <div class="stat-pill-label">Blockierungen gesamt</div>
+                <div class="stat-pill-val" id="stat-total">–</div>
+            </div>
+            <div class="stat-pill">
+                <div class="stat-pill-label">Meistblockiert</div>
+                <div class="stat-pill-val" id="stat-top" style="font-size:0.95rem;padding-top:4px;">–</div>
+            </div>
+        </div>
+
+        <div class="updated-at" id="updated-at"></div>
+
+        <!-- Filter -->
+        <div class="filter-row">
+            <input class="filter-input" id="filter-input" type="search"
+                   placeholder="Domain suchen…" oninput="filterRows()" autocomplete="off">
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrap">
+            <div class="table-header">
+                <span>#</span>
+                <span>Domain</span>
+                <span>Beliebtheit</span>
+                <span style="text-align:right;">Nutzer</span>
+            </div>
+            <div id="table-body">
+                <!-- Skeleton rows -->
+                ${[1,2,3,4,5,6].map(() => `
+                <div class="skeleton-row">
+                    <div class="sk" style="width:20px;height:14px;margin:auto;"></div>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <div class="sk" style="width:22px;height:22px;border-radius:4px;"></div>
+                        <div class="sk" style="width:140px;height:14px;"></div>
+                    </div>
+                    <div class="sk" style="height:5px;border-radius:3px;"></div>
+                    <div class="sk" style="width:30px;height:14px;margin-left:auto;"></div>
+                </div>`).join('')}
+            </div>
+        </div>
+
+        <a href="/" class="back-link">← Zurück zur Suche</a>
+    </div>
+
+    <script>
+        let allItems   = [];
+        let maxCount   = 1;
+
+        function formatNum(n) {
+            return Number(n).toLocaleString('de-DE');
+        }
+
+        function renderRows(items) {
+            const body = document.getElementById('table-body');
+
+            if (!items.length) {
+                body.innerHTML = `
+                    <div class="state-box">
+                        <div class="icon">✅</div>
+                        <p>Noch keine Domains blockiert.<br>Blockiere eine Domain in den Suchergebnissen, um sie hier zu sehen.</p>
+                    </div>`;
+                return;
+            }
+
+            body.innerHTML = items.map((item, i) => {
+                const rank    = i + 1;
+                const pct     = maxCount > 0 ? Math.round((item.count / maxCount) * 100) : 0;
+                const topCls  = rank <= 3 ? `rank-${rank}` : '';
+                const domain  = item.domain || '';
+                const favicon = domain ? `https://www.google.com/s2/favicons?sz=32&domain=${encodeURIComponent(domain)}` : '';
+
+                return `
+                <div class="domain-row" data-domain="${domain.toLowerCase()}">
+                    <div class="row-rank ${rank <= 3 ? 'top-3' : ''}">${rank}</div>
+                    <div class="row-domain">
+                        ${favicon ? `<img class="favicon" src="${favicon}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
+                        <div style="min-width:0;">
+                            <div class="domain-name">${escHtml(domain)}</div>
+                            <a class="domain-link" href="https://${escHtml(domain)}" target="_blank" rel="noopener noreferrer">
+                                https://${escHtml(domain)}
+                            </a>
+                        </div>
+                    </div>
+                    <div class="row-bar-wrap">
+                        <div class="row-bar-bg">
+                            <div class="row-bar-fill ${topCls}" style="width:${pct}%"></div>
+                        </div>
+                    </div>
+                    <div class="row-count">
+                        ${formatNum(item.count)}
+                        <small>${item.count === 1 ? 'Nutzer' : 'Nutzer'}</small>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function filterRows() {
+            const q = document.getElementById('filter-input').value.trim().toLowerCase();
+            const filtered = q ? allItems.filter(i => i.domain.includes(q)) : allItems;
+            renderRows(filtered);
+        }
+
+        function escHtml(str) {
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        async function loadStats(manual = false) {
+            const btn = document.getElementById('refresh-btn');
+            btn.classList.add('spinning');
+
+            try {
+                const res  = await fetch('/api/stats/blocked');
+                const data = await res.json();
+
+                if (!data.success) throw new Error(data.error);
+
+                allItems = data.items || [];
+                maxCount = allItems.length > 0 ? allItems[0].count : 1;
+
+                // Stats pills
+                document.getElementById('stat-domains').textContent = formatNum(data.totalDomains);
+                document.getElementById('stat-total').textContent   = formatNum(data.totalBlocks);
+                document.getElementById('stat-top').textContent     = allItems.length > 0 ? allItems[0].domain : '–';
+
+                // Updated at
+                document.getElementById('updated-at').textContent =
+                    'Zuletzt aktualisiert: ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+                filterRows();
+
+            } catch (err) {
+                document.getElementById('table-body').innerHTML = `
+                    <div class="state-box">
+                        <div class="icon">⚠️</div>
+                        <p>Fehler beim Laden der Daten.<br>${escHtml(err.message)}</p>
+                    </div>`;
+            } finally {
+                setTimeout(() => btn.classList.remove('spinning'), 400);
+            }
+        }
+
+        // Initial load
+        loadStats();
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => loadStats(), 30000);
+    </script>
+</body>
+</html>

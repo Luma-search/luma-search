@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUMA Analytics & Moderation</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+    <link rel="manifest" href="/manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { overflow-x: hidden; }
+
+        :root {
+            --bg:       #1c1c1d;
+            --surface:  #1a1a1e;
+            --surface2: #242428;
+            --border:   #35353a;
+            --text:     #ededef;
+            --muted:    #888898;
+            --accent:   #C29A40;
+            --accent2:  #C29A40;
+            --glow:     rgba(194, 154, 64, 0.1);
+        }
+
+        :root[data-theme="light"] {
+            --bg:       #f5f5f7;
+            --surface:  #ffffff;
+            --surface2: #ebebed;
+            --border:   #d1d1d6;
+            --text:     #1c1c1e;
+            --muted:    #6c6c80;
+            --accent:   #C29A40;
+        }
+        :root[data-theme="light"] body { background: var(--bg); }
+        :root[data-theme="light"] header { background: rgba(245, 245, 247, 0.95); }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(15, 15, 17, 0.90);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 14px 28px;
+            max-width: 2000px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--text);
+            text-decoration: none;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+        .logo .u { color: var(--accent2); }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .current-time {
+            font-size: 13px;
+            color: var(--muted);
+            font-family: 'Courier New', monospace;
+        }
+
+        main {
+            flex: 1;
+            width: 100%;
+            max-width: 2000px;
+            margin: 0 auto;
+            padding: 32px 28px;
+        }
+
+        .tab-nav {
+            display: flex;
+            gap: 2px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 28px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s;
+        }
+
+        .card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px var(--glow);
+        }
+
+        .card-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 8px;
+        }
+
+        .card-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        select, input {
+            padding: 8px 12px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 8px var(--glow);
+        }
+
+        .chart {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            transition: all 0.2s;
+        }
+
+        .chart:hover {
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px var(--glow);
+        }
+
+        .chart-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .bar-label {
+            width: 100px;
+            font-size: 12px;
+            color: var(--muted);
+            flex-shrink: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .bar-fill {
+            flex: 1;
+            height: 24px;
+            background: var(--surface2);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), rgba(194, 154, 64, 0.5));
+            border-radius: 4px;
+            width: 100%;
+            transition: width 0.3s;
+        }
+
+        .bar-value {
+            min-width: 50px;
+            text-align: right;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .table-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 24px;
+            transition: all 0.2s;
+        }
+
+        .table-container:hover {
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px var(--glow);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead {
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+        }
+
+        th:hover { color: var(--text); }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: var(--surface2); }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .badge-accent {
+            background: rgba(194, 154, 64, 0.1);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--muted);
+        }
+
+        .metric-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .metric-icon { font-size: 24px; margin-bottom: 8px; }
+        .metric-label {
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 6px;
+        }
+
+        .metric-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        @media (max-width: 768px) {
+            main { padding: 20px 16px; }
+            .header-row { padding: 12px 16px; }
+            .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+            .grid-2 { grid-template-columns: 1fr; }
+            .controls { grid-template-columns: 1fr; }
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--surface); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-row">
+            <div class="logo">Lu<span class="u">m</span>a Analytics</div>
+            <div class="header-controls">
+                <div class="current-time" id="current-time">--:--:--</div>
+                <button class="btn btn-primary" onclick="loadAllData()">🔄 Refresh</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="kpi-grid" id="kpi-cards">
+            <div class="card empty-state">Laden...</div>
+        </div>
+
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('analytics')">📊 Analytics</button>
+            <button class="tab-btn" onclick="switchTab('moderation')">🛡️ Moderation</button>
+            <button class="tab-btn" onclick="switchTab('security')">🚨 Security</button>
+            <button class="tab-btn" onclick="switchTab('performance')">⚡ Performance</button>
+            <button class="tab-btn" onclick="switchTab('history')">📝 History</button>
+        </div>
+
+        <!-- ANALYTICS TAB -->
+        <div id="analytics" class="tab-content active">
+            <div class="controls">
+                <div class="control-group">
+                    <label class="control-label">Zeitraum</label>
+                    <select id="analytics-period" onchange="refreshAnalytics()">
+                        <option value="24h">Letzte 24h</option>
+                        <option value="7d" selected>Letzte 7 Tage</option>
+                        <option value="30d">Letzte 30 Tage</option>
+                        <option value="all">Gesamte Zeit</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Tab-Filter</label>
+                    <select id="analytics-tab-filter" onchange="refreshAnalytics()">
+                        <option value="">Alle Tabs</option>
+                        <option value="Alles">Alles</option>
+                        <option value="Bilder">Bilder</option>
+                        <option value="Videos">Videos</option>
+                        <option value="Nachrichten">Nachrichten</option>
+                        <option value="Fragen">Fragen</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Limit</label>
+                    <select id="history-limit" onchange="refreshAnalytics()">
+                        <option value="25">25</option>
+                        <option value="50" selected>50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                    </select>
+                </div>
+                <div class="control-group" style="align-self: flex-end;">
+                    <button class="btn" onclick="exportAnalytics()">📥 Export</button>
+                </div>
+            </div>
+
+            <div class="chart">
+                <div class="chart-title">🔥 Top Search Queries</div>
+                <div id="top-searches"></div>
+            </div>
+
+            <div class="chart">
+                <div class="chart-title">📈 Suchtrends (24h)</div>
+                <div id="search-trends"></div>
+            </div>
+
+            <div class="grid-2">
+                <div class="chart">
+                    <div class="chart-title">📊 Suchen nach Tab</div>
+                    <div id="tab-distribution"></div>
+                </div>
+                <div class="chart">
+                    <div class="chart-title">⏱️ Response-Zeit nach Tab</div>
+                    <div id="response-time-by-tab"></div>
+                </div>
+            </div>
+
+            <div class="chart">
+                <div class="chart-title">💡 Qualitäts-Metriken</div>
+                <div id="quality-metrics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px;"></div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th onclick="sortHistoryBy('time')">📅 Zeit</th>
+                            <th onclick="sortHistoryBy('query')">🔍 Query</th>
+                            <th onclick="sortHistoryBy('results')">📊 Results</th>
+                            <th onclick="sortHistoryBy('duration')">⚡ Duration</th>
+                            <th>Tab</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailed-history-table">
+                        <tr><td colspan="5" class="empty-state">Laden...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MODERATION TAB -->
+        <div id="moderation" class="tab-content">
+            <div class="grid-2">
+                <div class="table-container">
+                    <div style="padding: 16px; border-bottom: 1px solid var(--border); background: var(--surface2);">
+                        <div style="font-weight: 600; color: var(--text);">📋 Moderation Queue</div>
+                    </div>
+                    <div style="padding: 20px; max-height: 600px; overflow-y: auto;" id="moderation-queue">
+                        <div class="empty-state">Laden...</div>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <div style="padding: 16px; border-bottom: 1px solid var(--border); background: var(--surface2);">
+                        <div style="font-weight: 600; color: var(--text);">📊 Statistik (7 Tage)</div>
+                    </div>
+                    <div style="padding: 20px; max-height: 600px; overflow-y: auto;" id="moderation-stats">
+                        <div class="empty-state">Laden...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECURITY TAB -->
+        <div id="security" class="tab-content">
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Zeit</th><th>Typ</th><th>Details</th><th>IP</th><th>Severity</th></tr></thead>
+                    <tbody id="security-table">
+                        <tr><td colspan="5" class="empty-state">Laden...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PERFORMANCE TAB -->
+        <div id="performance" class="tab-content">
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Endpoint</th><th>Requests</th><th>Ø Duration</th><th>Min</th><th>Max</th></tr></thead>
+                    <tbody id="performance-table">
+                        <tr><td colspan="5" class="empty-state">Laden...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- HISTORY TAB -->
+        <div id="history" class="tab-content">
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Zeit</th><th>Query</th><th>Results</th><th>Duration</th><th>Tab</th></tr></thead>
+                    <tbody id="history-table">
+                        <tr><td colspan="5" class="empty-state">Laden...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let analyticsCache = null;
+        let historySort = { field: 'time', asc: false };
+
+        function getColorForDuration(ms) {
+            if (ms < 100) return '#7cb7f7';
+            if (ms < 500) return '#C29A40';
+            if (ms < 1000) return '#f07070';
+            return '#ff5555';
+        }
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = now.toLocaleTimeString('de-DE');
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            if (tabName === 'analytics' && analyticsCache) refreshAnalytics();
+        }
+
+        async function loadAllData() {
+            try {
+                console.log('🔄 Lade Analytics vom Server...');
+                const response = await fetch('/api/admin/analytics');
+                console.log('Response Status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('✅ Daten erhalten:', data);
+                
+                // Wenn keine Daten, generiere Test-Daten
+                if (!data.summary || (data.summary.totalSearches24h === 0 && data.summary.totalSearches7d === 0)) {
+                    console.log('⚠️ Keine Daten vorhanden. Generiere Test-Daten...');
+                    await fetch('/api/admin/test-data');
+                    return setTimeout(() => loadAllData(), 500);
+                }
+                
+                analyticsCache = data;
+                renderKPIs(data.summary);
+                renderSecurityEvents(data.securityEvents);
+                renderPerformance(data.performance);
+                renderSearchHistory(data.searchHistory);
+                refreshAnalytics();
+            } catch (error) {
+                console.error('❌ Fehler beim Laden:', error);
+                document.getElementById('kpi-cards').innerHTML = `<div class="card" style="grid-column: 1 / -1;"><div class="empty-state">❌ ${error.message}</div></div>`;
+            }
+            loadModerationData();
+        }
+
+        async function loadModerationData() {
+            try {
+                const [queueRes, statsRes] = await Promise.all([
+                    fetch('/api/admin/moderation/queue'),
+                    fetch('/api/admin/moderation/stats')
+                ]);
+                const queueData = await queueRes.json();
+                const statsData = await statsRes.json();
+                renderModerationQueue(queueData.items || []);
+                renderModerationStats(statsData.categories || []);
+            } catch (error) {
+                console.error('Fehler:', error);
+            }
+        }
+
+        function refreshAnalytics() {
+            if (!analyticsCache) return;
+            const period = document.getElementById('analytics-period')?.value || '7d';
+            const tabFilter = document.getElementById('analytics-tab-filter')?.value || '';
+            const historyLimit = parseInt(document.getElementById('history-limit')?.value || '50');
+            
+            let searches = analyticsCache.topSearches || [];
+            let history = analyticsCache.searchHistory || [];
+
+            if (period !== 'all') {
+                const now = Date.now();
+                let cutoff;
+                switch (period) {
+                    case '24h': cutoff = now - (24 * 60 * 60 * 1000); break;
+                    case '7d': cutoff = now - (7 * 24 * 60 * 60 * 1000); break;
+                    case '30d': cutoff = now - (30 * 24 * 60 * 60 * 1000); break;
+                    default: cutoff = 0;
+                }
+                history = history.filter(h => new Date(h.timestamp).getTime() > cutoff);
+            }
+
+            if (tabFilter) history = history.filter(h => h.tab === tabFilter);
+
+            renderTopSearches(searches.slice(0, 20));
+            renderSearchTrends(history);
+            renderTabDistribution(history);
+            renderResponseTimeByTab(history);
+            renderQualityMetrics(history);
+            renderDetailedHistory(history, historyLimit);
+        }
+
+        function renderKPIs(summary) {
+            const html = `
+                <div class="card"><div class="card-label">📊 Suchen (24h)</div><div class="card-value">${summary.totalSearches24h}</div><div class="card-subtitle">7 Tage: ${summary.totalSearches7d}</div></div>
+                <div class="card"><div class="card-label">⏱️ Ø Response</div><div class="card-value">${summary.avgSearchDuration}ms</div><div class="card-subtitle">Cache: ${summary.cacheHitEstimate}</div></div>
+                <div class="card"><div class="card-label">🚨 Security</div><div class="card-value">${summary.securityEvents24h}</div><div class="card-subtitle">Critical: ${summary.criticalEvents}</div></div>
+                <div class="card"><div class="card-label">🏆 Top Query</div><div class="card-value" style="font-size: 18px;">${summary.topQuery?.query || 'N/A'}</div><div class="card-subtitle">${summary.topQuery?.count || 0} Suchen</div></div>
+                <div class="card"><div class="card-label">🕐 Peak Hour</div><div class="card-value" style="font-size: 18px;">${summary.peakHour}</div></div>
+                <div class="card"><div class="card-label">📈 Ø Results</div><div class="card-value">${summary.avgResultsPerSearch}</div></div>
+            `;
+            document.getElementById('kpi-cards').innerHTML = html;
+        }
+
+        function renderTopSearches(searches) {
+            if (searches.length === 0) return document.getElementById('top-searches').innerHTML = '<div class="empty-state">Keine Daten</div>';
+            const maxCount = Math.max(...searches.map(s => s.count));
+            const html = searches.map((s, i) => `<div class="bar"><div class="bar-label">${i + 1}. "${s.query}"</div><div class="bar-fill" style="width: ${(s.count / maxCount) * 100}%;"></div><div class="bar-value">${s.count}x</div></div>`).join('');
+            document.getElementById('top-searches').innerHTML = html;
+        }
+
+        function renderSearchTrends(history) {
+            const hourMap = {};
+            for (let i = 0; i < 24; i++) hourMap[i] = 0;
+            history.forEach(entry => {
+                const hour = new Date(entry.timestamp).getHours();
+                hourMap[hour]++;
+            });
+            const maxCount = Math.max(...Object.values(hourMap));
+            const html = Array.from({ length: 24 }, (_, h) => `<div class="bar"><div class="bar-label">${h}:00</div><div class="bar-fill" style="width: ${maxCount > 0 ? (hourMap[h] / maxCount) * 100 : 5}%;"></div><div class="bar-value">${hourMap[h]}</div></div>`).join('');
+            document.getElementById('search-trends').innerHTML = html;
+        }
+
+        function renderTabDistribution(history) {
+            const tabMap = {};
+            history.forEach(entry => tabMap[entry.tab] = (tabMap[entry.tab] || 0) + 1);
+            const total = Object.values(tabMap).reduce((a, b) => a + b, 0);
+            const html = Object.entries(tabMap).sort((a, b) => b[1] - a[1]).map(([tab, count]) => {
+                const percent = total > 0 ? (count / total * 100).toFixed(1) : 0;
+                return `<div class="bar"><div class="bar-label">${tab}</div><div class="bar-fill" style="width: ${percent}%;"></div><div class="bar-value">${count}</div></div>`;
+            }).join('');
+            document.getElementById('tab-distribution').innerHTML = html;
+        }
+
+        function renderResponseTimeByTab(history) {
+            const tabDurations = {};
+            history.forEach(entry => {
+                if (!tabDurations[entry.tab]) tabDurations[entry.tab] = [];
+                tabDurations[entry.tab].push(entry.duration);
+            });
+            const tabAvg = Object.entries(tabDurations).map(([tab, durations]) => ({ tab, avg: Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) })).sort((a, b) => b.avg - a.avg);
+            const maxAvg = Math.max(...tabAvg.map(t => t.avg)) || 1;
+            const html = tabAvg.map(({ tab, avg }) => `<div class="bar"><div class="bar-label">${tab}</div><div class="bar-fill" style="width: ${(avg / maxAvg) * 100}%;"></div><div class="bar-value" style="color: ${getColorForDuration(avg)};">${avg}ms</div></div>`).join('');
+            document.getElementById('response-time-by-tab').innerHTML = html;
+        }
+
+        function renderQualityMetrics(history) {
+            if (history.length === 0) {
+                document.getElementById('quality-metrics').innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">Keine Daten</div>';
+                return;
+            }
+            const avgDuration = Math.round(history.reduce((sum, h) => sum + h.duration, 0) / history.length);
+            const avgResults = Math.round(history.reduce((sum, h) => sum + h.resultsCount, 0) / history.length);
+            const metrics = [
+                { label: 'Total', value: history.length, icon: '🔍' },
+                { label: 'Ø Duration', value: avgDuration + 'ms', icon: '⏱️' },
+                { label: 'Ø Results', value: avgResults, icon: '📊' },
+                { label: 'Min', value: Math.min(...history.map(h => h.duration)) + 'ms', icon: '🚀' },
+                { label: 'Max', value: Math.max(...history.map(h => h.duration)) + 'ms', icon: '🐢' }
+            ];
+            const html = metrics.map(m => `<div class="metric-card"><div class="metric-icon">${m.icon}</div><div class="metric-label">${m.label}</div><div class="metric-value">${m.value}</div></div>`).join('');
+            document.getElementById('quality-metrics').innerHTML = html;
+        }
+
+        function sortHistoryBy(field) {
+            if (historySort.field === field) historySort.asc = !historySort.asc;
+            else { historySort.field = field; historySort.asc = false; }
+            refreshAnalytics();
+        }
+
+        function renderDetailedHistory(history, limit) {
+            let sorted = [...history];
+            switch (historySort.field) {
+                case 'time': sorted.sort((a, b) => (historySort.asc ? 1 : -1) * (new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())); break;
+                case 'query': sorted.sort((a, b) => (historySort.asc ? 1 : -1) * a.query.localeCompare(b.query)); break;
+                case 'results': sorted.sort((a, b) => (historySort.asc ? 1 : -1) * (a.resultsCount - b.resultsCount)); break;
+                case 'duration': sorted.sort((a, b) => (historySort.asc ? 1 : -1) * (a.duration - b.duration)); break;
+            }
+            const limited = sorted.slice(0, limit);
+            if (limited.length === 0) {
+                document.getElementById('detailed-history-table').innerHTML = `<tr><td colspan="5" class="empty-state">Keine Einträge</td></tr>`;
+                return;
+            }
+            const html = limited.map(entry => `
+                <tr>
+                    <td>${new Date(entry.timestamp).toLocaleString('de-DE')}</td>
+                    <td><span class="badge badge-accent">"${entry.query}"</span></td>
+                    <td>${entry.resultsCount}</td>
+                    <td style="color: ${getColorForDuration(entry.duration)}; font-weight: 500;">${entry.duration}ms</td>
+                    <td>${entry.tab}</td>
+                </tr>
+            `).join('');
+            document.getElementById('detailed-history-table').innerHTML = html;
+        }
+
+        function exportAnalytics() {
+            if (!analyticsCache) { alert('Keine Daten'); return; }
+            const now = new Date();
+            const filename = `luma-analytics-${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}.json`;
+            const dataStr = JSON.stringify(analyticsCache, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function renderModerationQueue(items) {
+            if (items.length === 0) {
+                document.getElementById('moderation-queue').innerHTML = '<div class="empty-state">✨ Keine Einträge</div>';
+                return;
+            }
+            const html = items.map(item => `
+                <div style="padding: 12px; border-bottom: 1px solid var(--border); border-left: 3px solid var(--accent);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px;"><strong>${item.type?.toUpperCase()}</strong><span style="color: var(--muted);">${item.status?.toUpperCase()}</span></div>
+                    <div style="font-size: 12px; color: var(--muted); margin-bottom: 8px;">"${(item.text || '').substring(0, 100)}"</div>
+                    <div style="display: flex; gap: 6px;"><button class="btn btn-primary" onclick="approveMod(${item.id})" style="flex: 1; padding: 6px;">✅ OK</button><button class="btn" onclick="rejectMod(${item.id})" style="flex: 1; padding: 6px;">🗑️ Block</button></div>
+                </div>
+            `).join('');
+            document.getElementById('moderation-queue').innerHTML = html;
+        }
+
+        function renderModerationStats(categories) {
+            if (categories.length === 0) {
+                document.getElementById('moderation-stats').innerHTML = '<div class="empty-state">Keine Daten</div>';
+                return;
+            }
+            const html = categories.map(cat => `
+                <div style="padding: 12px; border-bottom: 1px solid var(--border); border-left: 3px solid var(--accent);">
+                    <div style="font-weight: 600; margin-bottom: 6px; font-size: 12px; text-transform: uppercase;">${cat.category}</div>
+                    <div style="font-size: 12px; color: var(--muted); line-height: 1.6;">Total: <strong>${cat.total}</strong> | Block: <strong>${cat.blocked}</strong> | Flag: <strong>${cat.flagged}</strong></div>
+                </div>
+            `).join('');
+            document.getElementById('moderation-stats').innerHTML = html;
+        }
+
+        async function approveMod(id) {
+            try {
+                const response = await fetch(`/api/admin/moderation/approve/${id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ moderator_note: 'Genehmigt' })
+                });
+                if (response.ok) { alert('✅ Genehmigt'); loadModerationData(); }
+            } catch (err) { alert(`❌ ${err.message}`); }
+        }
+
+        async function rejectMod(id) {
+            if (!confirm('Löschen?')) return;
+            try {
+                const response = await fetch(`/api/admin/moderation/reject/${id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ moderator_note: 'Abgelehnt', delete_content: true })
+                });
+                if (response.ok) { alert('🗑️ Gelöscht'); loadModerationData(); }
+            } catch (err) { alert(`❌ ${err.message}`); }
+        }
+
+        function renderSecurityEvents(events) {
+            if (events.length === 0) {
+                document.getElementById('security-table').innerHTML = `<tr><td colspan="5" class="empty-state">Keine Events</td></tr>`;
+                return;
+            }
+            const html = events.map(event => `<tr><td>${new Date(event.timestamp).toLocaleTimeString('de-DE')}</td><td><span class="badge">${event.type}</span></td><td>${event.details}</td><td>${event.ip}</td><td><span class="badge badge-accent">${event.severity?.toUpperCase()}</span></td></tr>`).join('');
+            document.getElementById('security-table').innerHTML = html;
+        }
+
+        function renderPerformance(performance) {
+            if (performance.length === 0) {
+                document.getElementById('performance-table').innerHTML = `<tr><td colspan="5" class="empty-state">Keine Daten</td></tr>`;
+                return;
+            }
+            const html = performance.map(perf => `<tr><td>${perf.endpoint}</td><td>${perf.count}</td><td><span class="badge badge-accent">${perf.avgDuration}ms</span></td><td>${perf.minDuration}ms</td><td>${perf.maxDuration}ms</td></tr>`).join('');
+            document.getElementById('performance-table').innerHTML = html;
+        }
+
+        function renderSearchHistory(history) {
+            if (history.length === 0) {
+                document.getElementById('history-table').innerHTML = `<tr><td colspan="5" class="empty-state">Keine Einträge</td></tr>`;
+                return;
+            }
+            const html = history.slice(0, 50).map(entry => `<tr><td>${new Date(entry.timestamp).toLocaleTimeString('de-DE')}</td><td><span class="badge badge-accent">"${entry.query}"</span></td><td>${entry.resultsCount}</td><td>${entry.duration}ms</td><td>${entry.tab}</td></tr>`).join('');
+            document.getElementById('history-table').innerHTML = html;
+        }
+
+        loadAllData();
+        setInterval(loadAllData, 30000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luma | Search Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:       #1c1c1d;
+            --surface:  #1a1a1e;
+            --surface2: #242428;
+            --border:   #35353a;
+            --text:     #ededef;
+            --muted:    #888898;
+            --accent:   #C29A40;
+            --success:  #4caf50;
+            --accent-glow: rgba(194, 154, 64, 0.15);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Hintergrund-Effekt */
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .blob-1 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(194, 154, 64, 0.05) 0%, transparent 70%);
+            top: -100px; left: -100px;
+        }
+
+        /* Linke Seite: Suchansicht */
+        .search-view {
+            flex: 1;
+            padding: 40px;
+            z-index: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        body.hub-open .search-view {
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .header-search {
+            width: 100%;
+            max-width: 700px;
+            margin-bottom: 50px;
+            text-align: center;
+        }
+        .breadcrumb {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            font-size: 14px; color: var(--muted);
+        }
+        .breadcrumb a { color: var(--muted); text-decoration: none; transition: 0.2s; }
+        .breadcrumb a:hover { color: var(--text); }
+
+        .results-list {
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .result-card {
+            background: var(--surface);
+            padding: 25px; border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+            transition: 0.2s; cursor: pointer;
+            text-align: left;
+        }
+        .result-card:hover { background: var(--surface2); border-color: var(--accent); }
+        .result-card h3 { color: var(--accent); margin-bottom: 8px; }
+        .result-card p { color: var(--muted); font-size: 0.95rem; line-height: 1.6; }
+
+        .badge-solved {
+            font-size: 0.65rem; background: rgba(76, 175, 80, 0.15); color: var(--success);
+            border: 1px solid var(--success); padding: 2px 6px; border-radius: 4px; margin-left: 10px;
+        }
+
+        /* Rechte Seite: Social Hub */
+        .social-hub {
+            width: 0;
+            opacity: 0;
+            background: var(--surface);
+            border-left: 0 solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 2;
+            transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        body.hub-open .social-hub {
+            width: 420px;
+            opacity: 1;
+            border-left-width: 1px;
+        }
+
+        /* Wrapper mit fixer Breite */
+        .social-hub-content {
+            width: 420px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .hub-header {
+            padding: 24px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .close-btn { background: none; border: none; color: var(--muted); font-size: 28px; cursor: pointer; }
+
+        .knowledge-box {
+            background: rgba(76, 175, 80, 0.05); margin: 20px; padding: 16px;
+            border-radius: 12px; border: 1px dashed var(--success);
+        }
+        .knowledge-box h4 { font-size: 0.75rem; color: var(--success); text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+        .knowledge-box ul { padding-left: 18px; font-size: 0.85rem; color: var(--text); }
+        .knowledge-box li { margin-bottom: 6px; list-style-type: '✔  '; }
+
+        .chat-stream { flex: 1; overflow-y: auto; padding: 0 24px; display: flex; flex-direction: column; gap: 12px; }
+
+        .anon-msg {
+            background: var(--surface2); border: 1px solid var(--border);
+            padding: 15px; border-radius: 12px; font-size: 0.9rem; position: relative;
+        }
+        .anon-msg .meta { font-size: 0.7rem; color: var(--muted); margin-bottom: 8px; display: flex; justify-content: space-between; }
+        .anon-msg .id { color: var(--accent); font-weight: 600; }
+
+        .solve-btn {
+            margin-top: 10px; background: transparent; border: 1px solid var(--border);
+            color: var(--muted); font-size: 0.7rem; padding: 5px 10px; border-radius: 6px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .solve-btn:hover { border-color: var(--success); color: var(--success); }
+        .solve-btn.solved { border-color: var(--success); color: var(--success); background: rgba(76, 175, 80, 0.1); }
+
+        /* Menü-Items in Nachrichten */
+        .hub-menu-item {
+            display: block; width: 100%; text-align: left;
+            padding: 8px 14px; background: none; border: none;
+            color: #e8eaed; font-size: 0.75rem; cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+        .hub-menu-item:hover { background: rgba(138, 180, 248, 0.1); color: #8ab4f8; }
+
+        .cl-new-input {
+            width: 100%; background: #303134; border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text); font-size: 0.82rem;
+            padding: 9px 12px; margin-bottom: 9px; outline: none; box-sizing: border-box;
+            transition: border-color 0.2s; font-family: 'Inter', sans-serif;
+        }
+        .cl-new-input:focus { border-color: var(--accent); }
+        .cl-new-input::placeholder { color: var(--muted); }
+
+        .hub-input-area { padding: 24px; border-top: 1px solid var(--border); background: var(--surface); }
+        .input-box { display: flex; background: #303134; border-radius: 12px; padding: 6px; border: 1px solid var(--border); }
+        .input-box input { background: transparent; border: none; color: var(--text); padding: 10px; flex: 1; outline: none; font-family: 'Inter', sans-serif; }
+        .send-btn { background: var(--accent); color: #111; border: none; padding: 0 20px; border-radius: 8px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+
+        /* Verbindungsstatus-Indikator */
+        #hub-verbindung {
+            font-size: 0.65rem; padding: 2px 8px; border-radius: 4px;
+            background: rgba(76, 175, 80, 0.15); color: var(--success);
+            border: 1px solid var(--success); display: inline-block; margin-left: 8px;
+        }
+        #hub-verbindung.getrennt {
+            background: rgba(244, 67, 54, 0.15); color: #f44336; border-color: #f44336;
+        }
+
+        @media (max-width: 900px) {
+            .social-hub {
+                position: fixed; right: 0; top: 0; bottom: 0;
+                width: 100% !important;
+                transform: translateX(100%);
+                opacity: 1; border-left: none;
+                transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            body.hub-open .social-hub { transform: translateX(0); }
+            .social-hub-content { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="blob blob-1"></div>
+
+    <main class="search-view">
+        <div class="header-search">
+            <h1 style="font-size: 2.2rem; margin-bottom: 20px;">L<span style="color:var(--accent)">u</span>ma</h1>
+            <div class="breadcrumb">
+                <a href="/">Luma Suche</a>
+                <span>›</span>
+                <span id="hubPathTopic" style="color: var(--accent); font-weight: 600;">Thema</span>
+            </div>
+
+            <!-- Liste zu Thema erstellen -->
+            <div style="width: 100%; max-width: 700px; margin: 20px auto 0;">
+                <button class="result-card" onclick="toggleListeErstellen()" style="width:100%; text-align:center; color: var(--accent); font-size: 0.9rem; font-weight: 500; padding: 12px; margin-bottom: 0;">
+                    + Liste zu diesem Thema erstellen
+                </button>
+                <div id="create-list-form" style="display:none; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 8px; text-align: left;">
+                    <p style="font-size: 0.75rem; color: var(--accent); font-weight: 600; text-transform: uppercase; margin-bottom: 14px;">Neue Liste</p>
+                    <input  id="cl-new-title" class="cl-new-input" type="text" placeholder="Titel der Liste *"           maxlength="200">
+                    <input  id="cl-new-desc"  class="cl-new-input" type="text" placeholder="Beschreibung (optional)"     maxlength="300">
+                    <input  id="cl-new-user"  class="cl-new-input" type="text" placeholder="Dein Username (optional)"    maxlength="50">
+                    <input  id="cl-new-tags"  class="cl-new-input" type="text" placeholder="Tag wird automatisch gesetzt" maxlength="200" readonly style="color: var(--muted);">
+                    <button id="cl-new-submit" onclick="listeVeroeffentlichen()" style="background: var(--accent); color: #111; border: none; border-radius: 8px; padding: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; width: 100%; margin-top: 4px; font-family: 'Inter', sans-serif;">Liste veröffentlichen</button>
+                    <div id="cl-new-msg" style="font-size: 0.8rem; padding-top: 10px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-list" id="results-list"></div>
+    </main>
+
+    <aside class="social-hub">
+        <div class="social-hub-content">
+            <div class="hub-header">
+                <div>
+                    <span style="color: var(--accent); font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Intelligence Hub</span>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <h2 id="hub-title">Thema</h2>
+                        <span id="hub-verbindung">verbunden</span>
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeHub()">×</button>
+            </div>
+
+            <div class="knowledge-box">
+                <h4><span style="font-size: 1.1rem;">💡</span> Hilfreichste Lösungen</h4>
+                <ul id="knowledge-list"></ul>
+            </div>
+
+            <div class="chat-stream" id="chat"></div>
+
+            <div class="hub-input-area">
+                <!-- Username-Feld für den Hub -->
+                <input type="text" id="hubNutzername"
+                    placeholder="Dein Username (optional)"
+                    style="width:100%; background:#303134; border:1px solid var(--border);
+                           border-radius:8px; color:var(--text); font-size:0.82rem;
+                           padding:9px 12px; margin-bottom:9px; outline:none;
+                           font-family:'Inter',sans-serif;">
+                <div class="input-box">
+                    <input type="text" id="msgInput" placeholder="Hilf anderen oder frage…">
+                    <button class="send-btn" onclick="send()">Senden</button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!--
+        WICHTIG: socket.io.js MUSS vor social-hub.js geladen werden.
+        /socket.io/socket.io.js wird automatisch von deinem Socket.io-Server bereitgestellt —
+        du musst diese Datei nicht manuell herunterladen oder kopieren.
+    -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="../navigations_tabs/social-hub.js"></script>
+
+    <script>
+        // ── Verbindungsstatus-Anzeige ────────────────────────────────────────
+        socket.on('connect',    () => {
+            const el = document.getElementById('hub-verbindung');
+            if (el) { el.textContent = 'verbunden'; el.classList.remove('getrennt'); }
+        });
+        socket.on('disconnect', () => {
+            const el = document.getElementById('hub-verbindung');
+            if (el) { el.textContent = 'getrennt'; el.classList.add('getrennt'); }
+        });
+
+        // ── Aktiven Hub-Toggle (erneuter Klick schließt) ─────────────────────
+        let _aktiverHubId = null;
+
+        const _basisOpenHub = window.openHub;
+        window.openHub = function(thema) {
+            if (document.body.classList.contains('hub-open') && _aktiverHubId === thema) {
+                closeHub();
+            } else {
+                _aktiverHubId = thema;
+                if (typeof _basisOpenHub === 'function') _basisOpenHub(thema);
+            }
+        };
+
+        const _basisCloseHub = window.closeHub;
+        window.closeHub = function() {
+            _aktiverHubId = null;
+            if (typeof _basisCloseHub === 'function') _basisCloseHub();
+        };
+
+        // ── Seite initialisieren ─────────────────────────────────────────────
+        const _suchbegriff = new URLSearchParams(window.location.search).get('q');
+        const _aktuellerQuery = _suchbegriff ? decodeURIComponent(_suchbegriff) : '';
+
+        if (_aktuellerQuery) {
+            document.getElementById('hubPathTopic').textContent = _aktuellerQuery;
+            document.getElementById('cl-new-tags').value = _aktuellerQuery.toLowerCase();
+            loadLists(_aktuellerQuery);
+        }
+
+        // ── Liste erstellen (Toggle) ─────────────────────────────────────────
+        function toggleListeErstellen() {
+            const formular = document.getElementById('create-list-form');
+            formular.style.display = formular.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function listeVeroeffentlichen() {
+            const titel  = document.getElementById('cl-new-title').value.trim();
+            const beschr = document.getElementById('cl-new-desc').value.trim();
+            const nutzer = document.getElementById('cl-new-user').value.trim() || 'Anonym';
+            const tags   = [_aktuellerQuery.toLowerCase()];
+            const meldEl = document.getElementById('cl-new-msg');
+
+            if (!titel) {
+                meldEl.style.color = '#f44336';
+                meldEl.textContent = 'Titel ist erforderlich.';
+                return;
+            }
+
+            const btn = document.getElementById('cl-new-submit');
+            btn.disabled    = true;
+            btn.textContent = 'Wird gespeichert…';
+
+            try {
+                const res  = await fetch('/api/community-lists', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ title: titel, description: beschr, username: nutzer, tags }),
+                });
+                const daten = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(daten.error || `HTTP ${res.status}`);
+
+                meldEl.style.color = '#4caf50';
+                meldEl.textContent = '✓ Liste erstellt!';
+                btn.textContent    = 'Liste veröffentlichen';
+                btn.disabled       = false;
+
+                setTimeout(() => {
+                    document.getElementById('create-list-form').style.display = 'none';
+                    document.getElementById('cl-new-title').value = '';
+                    document.getElementById('cl-new-desc').value  = '';
+                    document.getElementById('cl-new-user').value  = '';
+                    meldEl.textContent = '';
+                    loadLists(_aktuellerQuery);
+                }, 1500);
+
+            } catch (e) {
+                meldEl.style.color  = '#f44336';
+                meldEl.textContent  = `Fehler: ${e.message}`;
+                btn.disabled        = false;
+                btn.textContent     = 'Liste veröffentlichen';
+            }
+        }
+    </script>
+</body>
+</html>

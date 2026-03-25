@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paywall Radar – Luma</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #0f0f11;
+            --surface: #1a1a1e;
+            --surface2: #242428;
+            --border: #35353a;
+            --text: #ededef;
+            --muted: #888898;
+            --accent: #C29A40;
+            --negative: #f44336;
+            --positive: #4caf50;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+        .container { width: 100%; max-width: 600px; }
+        .header { text-align: center; margin-bottom: 25px; }
+        .logo { font-size: 32px; font-weight: 700; color: var(--text); text-decoration: none; display: inline-block; }
+        .logo span { color: var(--accent); }
+        h1 { font-size: 1.8rem; margin-top: 20px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        p { color: var(--muted); line-height: 1.6; }
+        
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .input-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-size: 0.9rem; color: var(--text); font-weight: 500; }
+        input[type="url"] {
+            width: 100%;
+            padding: 14px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="url"]:focus { border-color: var(--accent); }
+        
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn-submit:hover { opacity: 0.9; }
+        
+        .status-msg {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            display: none;
+            text-align: center;
+        }
+        .status-msg.success { background: rgba(76, 175, 80, 0.1); color: var(--positive); border: 1px solid rgba(76, 175, 80, 0.2); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/" class="logo">L<span>u</span>ma</a>
+            <h1>📡 Paywall Radar</h1>
+            <p>Hilf der Community und melde URLs, die hinter einer Paywall versteckt sind.</p>
+        </div>
+
+        <div class="card">
+            <div style="background: rgba(194,154,64,0.1); border: 1px solid rgba(194,154,64,0.25); border-radius: 8px; padding: 14px; margin-bottom: 20px; font-size: 0.9rem; color: #ededef; line-height: 1.5;">
+                <strong>Wozu dient das?</strong><br>
+                Deine Meldung hilft uns, Paywall-Inhalte in den Suchergebnissen zu kennzeichnen, damit andere Nutzer diese schneller erkennen und nicht unnötig darauf klicken.
+            </div>
+
+            <form id="paywallForm">
+                <div class="input-group">
+                    <label for="urlInput">URL der Paywall-Seite</label>
+                    <input type="url" id="urlInput" placeholder="https://beispiel.de/artikel..." required autocomplete="off">
+                </div>
+                <button type="submit" class="btn-submit">Paywall melden</button>
+            </form>
+            <div id="statusMsg" class="status-msg"></div>
+        </div>
+    </div>
+
+    <script>
+        // URL aus Query-Parameter lesen und ins Input-Feld eintragen
+        const params = new URLSearchParams(window.location.search);
+        const urlParam = params.get('url');
+        if (urlParam) {
+            document.getElementById('urlInput').value = urlParam;
+        }
+
+        document.getElementById('paywallForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('urlInput');
+            const status = document.getElementById('statusMsg');
+            const url = input.value.trim();
+
+            if (!url) return;
+
+            status.style.display = 'none';
+            const btn = e.target.querySelector('button');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Wird gesendet...';
+
+            try {
+                const res = await fetch('/api/paywall', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+
+                // Robuste Fehlerbehandlung: Prüfen, ob die Antwort valides JSON ist
+                let data;
+                const contentType = res.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    data = await res.json();
+                } else {
+                    // Server hat HTML oder Text gesendet (wahrscheinlich ein Crash)
+                    throw new Error(`Server-Fehler (${res.status})`);
+                }
+
+                if (res.ok && data.success) {
+                    status.textContent = 'Danke! Die URL wurde erfolgreich gemeldet.';
+                    status.classList.add('success');
+                    status.style.display = 'block';
+                    input.value = '';
+                } else {
+                    // Der `requireAuth` Middleware leitet bei 401 auf die Login-Seite um,
+                    // daher ist eine spezielle Behandlung hier nicht mehr nötig.
+                    // Wir zeigen einfach die Fehlermeldung vom Server.
+                    status.textContent = data.error || `Ein Fehler ist aufgetreten (Code: ${res.status}).`;
+                    status.style.display = 'block';
+                }
+            } catch (err) {
+                status.textContent = err.message || 'Verbindungsfehler. Bitte prüfe deine Internetverbindung.';
+                status.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+    </script>
+</body>
+</html>

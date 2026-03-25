@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrieren – Luma</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:       #0f0f11;
+            --surface:  #1a1a1e;
+            --surface2: #242428;
+            --border:   #35353a;
+            --text:     #ededef;
+            --muted:    #888898;
+            --accent:   #C29A40;
+            --negative: #f44336;
+            --positive: #4caf50;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        .blob { position: fixed; border-radius: 50%; filter: blur(90px); z-index: -1; pointer-events: none; }
+        .blob-1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(194,154,64,0.08) 0%, transparent 70%); top: -200px; left: -200px; }
+        .blob-2 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(123,167,247,0.06) 0%, transparent 70%); bottom: -150px; right: -150px; }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 44px 40px 36px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 24px 48px rgba(0,0,0,0.3);
+            animation: fadeUp 0.3s ease both;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 6px;
+            color: var(--text);
+            text-decoration: none;
+            display: block;
+            letter-spacing: -0.5px;
+        }
+        .logo span { color: var(--accent); }
+
+        .card-title {
+            text-align: center;
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 32px;
+        }
+
+        /* Alerts */
+        .alert {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            padding: 11px 13px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-bottom: 18px;
+            line-height: 1.5;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+        .alert-error   { background: rgba(244,67,54,0.1);  border: 1px solid rgba(244,67,54,0.3);  color: #f44336; }
+        .alert-success { background: rgba(76,175,80,0.1);  border: 1px solid rgba(76,175,80,0.3);  color: #4caf50; }
+        .alert-icon    { flex-shrink: 0; margin-top: 1px; font-style: normal; }
+        .alert.hidden  { display: none; }
+
+        /* Form */
+        .form-group { margin-bottom: 18px; }
+
+        label {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--muted);
+            margin-bottom: 7px;
+            letter-spacing: 0.02em;
+        }
+
+        .input-wrap { position: relative; }
+
+        input[type="email"],
+        input[type="password"],
+        input[type="text"] {
+            width: 100%;
+            padding: 13px 14px;
+            background: var(--surface2);
+            border: 1.5px solid var(--border);
+            border-radius: 11px;
+            color: var(--text);
+            font-size: 14.5px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(194,154,64,0.12);
+        }
+        input.has-eye  { padding-right: 46px; }
+        input.is-ok    { border-color: var(--positive) !important; box-shadow: 0 0 0 3px rgba(76,175,80,0.1) !important; }
+        input.is-error { border-color: var(--negative) !important; box-shadow: 0 0 0 3px rgba(244,67,54,0.1) !important; }
+
+        /* Eye button */
+        .eye-btn {
+            position: absolute;
+            right: 11px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            padding: 5px;
+            line-height: 0;
+            border-radius: 6px;
+            transition: color 0.15s, background 0.15s;
+        }
+        .eye-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+        .eye-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+        .eye-btn svg   { display: block; }
+
+        /* Password strength */
+        .pw-strength { margin-top: 9px; display: none; }
+        .pw-bars     { display: flex; gap: 4px; margin-bottom: 5px; }
+        .pw-bar {
+            flex: 1;
+            height: 3px;
+            border-radius: 2px;
+            background: var(--border);
+            transition: background 0.3s;
+        }
+        .pw-bar.weak   { background: #f44336; }
+        .pw-bar.fair   { background: #ff9800; }
+        .pw-bar.good   { background: #8bc34a; }
+        .pw-bar.strong { background: #4caf50; }
+        .pw-hint       { font-size: 11.5px; color: var(--muted); min-height: 16px; }
+
+        /* Match hint */
+        .match-hint {
+            font-size: 11.5px;
+            margin-top: 6px;
+            min-height: 16px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Submit */
+        .btn-submit {
+            width: 100%;
+            padding: 13.5px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 11px;
+            font-weight: 600;
+            font-size: 15px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 8px;
+            letter-spacing: 0.01em;
+        }
+        .btn-submit:hover:not(:disabled)  { opacity: 0.88; }
+        .btn-submit:active:not(:disabled) { transform: scale(0.99); }
+        .btn-submit:disabled { opacity: 0.55; cursor: default; }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(0,0,0,0.25);
+            border-top-color: #000;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            flex-shrink: 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner.hidden { display: none; }
+
+        .divider { border: none; border-top: 1px solid var(--border); margin: 26px 0; }
+
+        .sub-text {
+            text-align: center;
+            font-size: 13px;
+            color: var(--muted);
+        }
+        .sub-text a { color: var(--accent); text-decoration: none; font-weight: 500; }
+        .sub-text a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="card">
+        <a href="/" class="logo">L<span>u</span>ma</a>
+        <p class="card-title">Neues Konto erstellen</p>
+
+        <div class="alert alert-error hidden" id="error-msg" role="alert" aria-live="polite">
+            <em class="alert-icon">⚠</em>
+            <span id="error-text"></span>
+        </div>
+        <div class="alert alert-success hidden" id="success-msg" role="status" aria-live="polite">
+            <em class="alert-icon">✓</em>
+            <span id="success-text"></span>
+        </div>
+
+        <form id="register-form" novalidate>
+            <div class="form-group">
+                <label for="benutzername">Benutzername</label>
+                <input type="text" id="benutzername" required placeholder="Dein Benutzername"
+                       autocomplete="username" minlength="3" maxlength="50">
+            </div>
+
+            <div class="form-group">
+                <label for="email">E-Mail-Adresse</label>
+                <input type="email" id="email" required placeholder="name@beispiel.de"
+                       autocomplete="email" inputmode="email">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Passwort</label>
+                <div class="input-wrap">
+                    <input class="has-eye" type="password" id="password" required
+                           placeholder="Mindestens 8 Zeichen" autocomplete="new-password">
+                    <button type="button" class="eye-btn" id="eye-pw"
+                            onclick="togglePw('password','eye-pw')"
+                            tabindex="-1" aria-label="Passwort anzeigen">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                             aria-hidden="true">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="pw-strength" id="pw-strength">
+                    <div class="pw-bars">
+                        <div class="pw-bar" id="bar-1"></div>
+                        <div class="pw-bar" id="bar-2"></div>
+                        <div class="pw-bar" id="bar-3"></div>
+                        <div class="pw-bar" id="bar-4"></div>
+                    </div>
+                    <div class="pw-hint" id="pw-hint"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password-confirm">Passwort bestätigen</label>
+                <div class="input-wrap">
+                    <input class="has-eye" type="password" id="password-confirm" required
+                           placeholder="Passwort wiederholen" autocomplete="new-password">
+                    <button type="button" class="eye-btn" id="eye-pwc"
+                            onclick="togglePw('password-confirm','eye-pwc')"
+                            tabindex="-1" aria-label="Passwort anzeigen">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                             aria-hidden="true">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="match-hint" id="match-hint"></div>
+            </div>
+
+            <button type="submit" class="btn-submit" id="btn-submit">
+                <span class="spinner hidden" id="spinner"></span>
+                <span id="btn-text">Konto erstellen</span>
+            </button>
+        </form>
+
+        <hr class="divider">
+
+        <p class="sub-text">
+            Bereits ein Konto? <a href="/login.html">Jetzt anmelden</a>
+        </p>
+    </div>
+
+    <script>
+        const SVG_EYE = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+        const SVG_EYE_OFF = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+
+        // ── Eye toggle ───────────────────────────────────────
+        function togglePw(inputId, btnId) {
+            const input = document.getElementById(inputId);
+            const btn   = document.getElementById(btnId);
+            const show  = input.type === 'password';
+            input.type  = show ? 'text' : 'password';
+            btn.innerHTML = show ? SVG_EYE_OFF : SVG_EYE;
+            btn.setAttribute('aria-label', show ? 'Passwort verbergen' : 'Passwort anzeigen');
+        }
+
+        // ── Password strength ────────────────────────────────
+        const STRENGTH = [
+            { label: 'Sehr schwach', color: 'weak',   bars: 1 },
+            { label: 'Schwach',      color: 'weak',   bars: 1 },
+            { label: 'Mittel',       color: 'fair',   bars: 2 },
+            { label: 'Gut',          color: 'good',   bars: 3 },
+            { label: 'Stark',        color: 'strong', bars: 4 },
+        ];
+        const HINT_COLORS = { weak: '#f44336', fair: '#ff9800', good: '#8bc34a', strong: '#4caf50' };
+
+        function calcStrength(pw) {
+            if (!pw) return -1;
+            let score = 0;
+            if (pw.length >= 8)          score++;
+            if (pw.length >= 12)         score++;
+            if (/[A-Z]/.test(pw))        score++;
+            if (/[0-9]/.test(pw))        score++;
+            if (/[^A-Za-z0-9]/.test(pw)) score++;
+            return Math.min(score, 4);
+        }
+
+        document.getElementById('password').addEventListener('input', function () {
+            const val  = this.value;
+            const wrap = document.getElementById('pw-strength');
+
+            if (!val) { wrap.style.display = 'none'; return; }
+            wrap.style.display = 'block';
+
+            const lvl  = calcStrength(val);
+            const info = STRENGTH[lvl];
+
+            for (let i = 1; i <= 4; i++) {
+                const bar = document.getElementById(`bar-${i}`);
+                bar.className = 'pw-bar' + (i <= info.bars ? ` ${info.color}` : '');
+            }
+
+            const hint = document.getElementById('pw-hint');
+            hint.textContent  = val.length < 8 ? `Noch ${8 - val.length} Zeichen bis zum Minimum` : info.label;
+            hint.style.color  = HINT_COLORS[info.color];
+
+            checkMatch();
+        });
+
+        // ── Password match ───────────────────────────────────
+        function checkMatch() {
+            const pw   = document.getElementById('password').value;
+            const cw   = document.getElementById('password-confirm').value;
+            const hint = document.getElementById('match-hint');
+            const conf = document.getElementById('password-confirm');
+
+            if (!cw) {
+                hint.innerHTML = '';
+                conf.classList.remove('is-ok', 'is-error');
+                return;
+            }
+            if (pw === cw) {
+                hint.innerHTML = `<span style="color:var(--positive)">✓ Passwörter stimmen überein</span>`;
+                conf.classList.add('is-ok');
+                conf.classList.remove('is-error');
+            } else {
+                hint.innerHTML = `<span style="color:var(--negative)">✗ Passwörter stimmen nicht überein</span>`;
+                conf.classList.add('is-error');
+                conf.classList.remove('is-ok');
+            }
+        }
+        document.getElementById('password-confirm').addEventListener('input', checkMatch);
+
+        // ── Alerts ───────────────────────────────────────────
+        function showError(msg) {
+            document.getElementById('error-text').textContent = msg;
+            document.getElementById('error-msg').classList.remove('hidden');
+            document.getElementById('success-msg').classList.add('hidden');
+        }
+        function showSuccess(msg) {
+            document.getElementById('success-text').textContent = msg;
+            document.getElementById('success-msg').classList.remove('hidden');
+            document.getElementById('error-msg').classList.add('hidden');
+        }
+        function hideAlerts() {
+            document.getElementById('error-msg').classList.add('hidden');
+            document.getElementById('success-msg').classList.add('hidden');
+        }
+
+        // ── Submit ───────────────────────────────────────────
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideAlerts();
+
+            const btn     = document.getElementById('btn-submit');
+            const spinner = document.getElementById('spinner');
+            const btnText = document.getElementById('btn-text');
+
+            const benutzername = document.getElementById('benutzername').value.trim();
+            const email        = document.getElementById('email').value.trim();
+            const pw           = document.getElementById('password').value;
+            const pwConf       = document.getElementById('password-confirm').value;
+
+            if (benutzername.length < 3) { showError('Der Benutzername muss mindestens 3 Zeichen haben.'); return; }
+            if (pw.length < 8)           { showError('Das Passwort muss mindestens 8 Zeichen haben.'); return; }
+            if (pw !== pwConf)           { showError('Die Passwörter stimmen nicht überein.'); return; }
+
+            btn.disabled        = true;
+            spinner.classList.remove('hidden');
+            btnText.textContent = 'Wird erstellt…';
+
+            try {
+                const res  = await fetch('/api/auth/register', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ benutzername, email, password: pw })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showSuccess('Konto erstellt! Du wirst weitergeleitet…');
+                    spinner.classList.add('hidden');
+                    btnText.textContent = 'Erfolgreich ✓';
+                    setTimeout(() => { window.location.href = '/'; }, 1200);
+                } else {
+                    showError(data.error || 'Registrierung fehlgeschlagen.');
+                    btn.disabled        = false;
+                    spinner.classList.add('hidden');
+                    btnText.textContent = 'Konto erstellen';
+                }
+            } catch {
+                showError('Verbindungsfehler. Bitte erneut versuchen.');
+                btn.disabled        = false;
+                spinner.classList.add('hidden');
+                btnText.textContent = 'Konto erstellen';
+            }
+        });
+
+        document.getElementById('benutzername').addEventListener('input', hideAlerts);
+        document.getElementById('email').addEventListener('input', hideAlerts);
+    </script>
+</body>
+</html>

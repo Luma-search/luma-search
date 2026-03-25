@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Weather Widget</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-color: #202124;
+            --surface-color: #303134;
+            --surface-hover: #3c4043;
+            --text-primary: #e8eaed;
+            --text-secondary: #9aa0a6;
+            --border-color: #5f6368;
+            --accent-active: #8ab4f8;
+            --accent-bg: rgba(138, 180, 248, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: transparent;
+            color: var(--text-primary);
+            padding: 0;
+        }
+
+        #weather-container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Haupt-Container im Google-Stil */
+        .weather-widget {
+            background: var(--bg-color);
+            border-radius: 24px;
+            padding: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Header */
+        .w-header { margin-bottom: 24px; }
+        .w-location { font-size: 22px; font-weight: 600; margin-bottom: 4px; color: #fff; }
+        .w-subtitle { font-size: 14px; color: var(--text-secondary); }
+
+        /* Main Grid (Aktuelles Wetter Links, Chart Rechts) */
+        .w-main-grid {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        /* Linke Spalte: Aktuelles Wetter */
+        .w-current-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .w-temp-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .w-icon-large {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+        }
+
+        .w-temp-main {
+            font-size: 40px;
+            font-weight: 500;
+            line-height: 1;
+            color: #fff;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .w-temp-unit {
+            font-size: 24px;
+            margin-top: 4px;
+            margin-left: 2px;
+        }
+
+        .w-unit-toggle {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: auto;
+            align-self: flex-start;
+            margin-top: 8px;
+            color: var(--text-secondary);
+        }
+        .w-unit-toggle span.active { color: #fff; }
+
+        .w-high-low {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .w-details-list {
+            list-style: none;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .w-details-list li {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .w-details-list li span:last-child {
+            color: var(--text-primary);
+        }
+
+        /* Rechte Spalte: Chart Bereich */
+        .w-chart-col {
+            background: var(--surface-color);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .w-chart-tabs {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .w-chart-tabs span { cursor: pointer; padding: 6px 12px; border-radius: 8px; }
+        .w-chart-tabs span.active {
+            background: var(--accent-bg);
+            color: var(--accent-active);
+        }
+
+        .w-chart-wrapper {
+            flex-grow: 1;
+            position: relative;
+            height: 120px;
+        }
+
+        /* Untere Reihe: 7-Tage Vorhersage */
+        .w-forecast-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 24px;
+        }
+
+        .w-day-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 4px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .w-day-card:hover { background: var(--surface-hover); }
+        .w-day-card.active {
+            background: var(--surface-color);
+        }
+
+        .w-day-name { font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+        .w-day-icon { width: 32px; height: 32px; margin-bottom: 8px; }
+        .w-day-temps {
+            font-size: 13px;
+            display: flex;
+            gap: 8px;
+        }
+        .w-day-temps .high { color: var(--text-primary); }
+        .w-day-temps .low { color: var(--text-secondary); }
+
+        @media (max-width: 600px) {
+            .w-main-grid { grid-template-columns: 1fr; gap: 32px; }
+            .w-forecast-row { overflow-x: auto; padding-bottom: 8px; }
+            .w-day-card { min-width: 60px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="weather-container"></div>
+
+    <script type="module">
+        // DEINE IMPORTE (Bleiben bestehen)
+        import { isWeatherQuery, extractLocationFromQuery } from '/modules/wetter/weatherDetector.js';
+        import { fetchWeather } from '/modules/wetter/weatherFetcher.js';
+
+        async function renderWeatherBox(query) {
+            try {
+                const container = document.getElementById('weather-container');
+                if (!container) return;
+                container.innerHTML = '';
+                
+                // Für Testzwecke auskommentiert, damit du es ohne echtes Backend im Browser ansehen kannst. 
+                // In Produktion bitte wieder einkommentieren!
+                /*
+                if (!isWeatherQuery(query)) return;
+                const location = extractLocationFromQuery(query);
+                if (!location) return;
+                const weatherData = await fetchWeather(location);
+                if (!weatherData) return;
+                */
+
+                // MOCK-DATEN (Damit das Design sofort sichtbar ist. Ersetze dies durch deine `weatherData`)
+                const weatherData = {
+                    location: "Schongau, Deutschland",
+                    temperature: "6",
+                    weatherDescription: "Klarer Himmel",
+                    windSpeed: "7.09",
+                    precipitation: "0",
+                    humidity: "83",
+                    // Platzhalter-Icon (ersetzen durch deine eigene Logik)
+                    iconUrl: "https://cdn-icons-png.flaticon.com/512/3222/3222800.png", 
+                    forecast: [
+                        { date: new Date().toISOString(), tempMax: "13", tempMin: "1" },
+                        { date: new Date(Date.now() + 86400000).toISOString(), tempMax: "13", tempMin: "4" },
+                        { date: new Date(Date.now() + 86400000*2).toISOString(), tempMax: "8", tempMin: "4" },
+                        { date: new Date(Date.now() + 86400000*3).toISOString(), tempMax: "12", tempMin: "2" },
+                        { date: new Date(Date.now() + 86400000*4).toISOString(), tempMax: "13", tempMin: "5" },
+                        { date: new Date(Date.now() + 86400000*5).toISOString(), tempMax: "13", tempMin: "3" },
+                        { date: new Date(Date.now() + 86400000*6).toISOString(), tempMax: "14", tempMin: "3" }
+                    ]
+                };
+
+                const { 
+                    location: locName, temperature, weatherDescription, 
+                    windSpeed, precipitation, humidity, forecast, iconUrl 
+                } = weatherData;
+
+                // Aktuelles Datum formatieren
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('de-DE', { weekday: 'long', month: 'short', day: 'numeric' });
+                const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+                // HTML Structure Injection
+                container.innerHTML = `
+                    <div class="weather-widget">
+                        <div class="w-header">
+                            <div class="w-location">${locName}</div>
+                            <div class="w-subtitle">${weatherDescription} · ${dateStr}, ${timeStr}</div>
+                        </div>
+
+                        <div class="w-main-grid">
+                            <div class="w-current-col">
+                                <div class="w-temp-row">
+                                    <img src="${iconUrl || 'https://cdn-icons-png.flaticon.com/512/3222/3222800.png'}" class="w-icon-large" alt="Wetter Icon">
+                                    <div>
+                                        <div class="w-temp-main">${temperature}<span class="w-temp-unit">°</span></div>
+                                        <div class="w-high-low">Hoch ${forecast[0]?.tempMax}° · Niedrig ${forecast[0]?.tempMin}°</div>
+                                    </div>
+                                    <div class="w-unit-toggle">
+                                        <span class="active">C</span> <span style="opacity:0.3">|</span> <span>F</span>
+                                    </div>
+                                </div>
+
+                                <ul class="w-details-list">
+                                    <li><span>Luftfeuchtigkeit</span> <span>${humidity} %</span></li>
+                                    <li><span>Niederschlag</span> <span>${precipitation} %</span></li>
+                                    <li><span>Wind</span> <span>${windSpeed} km/h</span></li>
+                                </ul>
+                            </div>
+
+                            <div class="w-chart-col">
+                                <div class="w-chart-tabs">
+                                    <span class="active">Temperatur</span>
+                                    <span>Niederschlag</span>
+                                    <span>Wind</span>
+                                </div>
+                                <div class="w-chart-wrapper">
+                                    <canvas id="hourlyChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="w-forecast-row" id="forecast-row">
+                            </div>
+                    </div>
+                `;
+
+                // Forecast rendern
+                const forecastContainer = document.getElementById('forecast-row');
+                forecast.forEach((day, index) => {
+                    const d = new Date(day.date);
+                    const dayName = index === 0 ? 'Fr.' : d.toLocaleDateString('de-DE', { weekday: 'short' }).substring(0, 2) + '.';
+                    
+                    forecastContainer.innerHTML += `
+                        <div class="w-day-card ${index === 0 ? 'active' : ''}">
+                            <div class="w-day-name">${dayName}</div>
+                            <img src="${iconUrl}" class="w-day-icon" alt="Icon">
+                            <div class="w-day-temps">
+                                <span class="high">${day.tempMax}°</span>
+                                <span class="low">${day.tempMin}°</span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                // Chart.js initialisieren
+                initChart();
+
+            } catch (err) {
+                console.error('[Weather] render error:', err);
+            }
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('hourlyChart').getContext('2d');
+            
+            // Gradient für die Fläche erstellen (Gelb zu Transparent)
+            let gradient = ctx.createLinearGradient(0, 0, 0, 120);
+            gradient.addColorStop(0, 'rgba(212, 175, 55, 0.4)'); // Gold-Gelb
+            gradient.addColorStop(1, 'rgba(212, 175, 55, 0)');
+
+            // Hier müsstest du idealerweise deine echten stündlichen Daten einfügen
+            const labels = ['Jetzt', '07 Uhr', '10 Uhr', '13 Uhr', '16 Uhr', '19 Uhr', '22 Uhr'];
+            const dataPoints = [5, 3, 8, 10, 13, 9, 7];
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: dataPoints,
+                        borderColor: '#e5b64c', // Gekennzeichnetes Gelb
+                        borderWidth: 2,
+                        backgroundColor: gradient,
+                        fill: true,
+                        tension: 0.4, // Sorgt für die weiche Kurve
+                        pointRadius: 0, // Versteckt die Datenpunkte wie im Originalbild
+                        pointHoverRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false } // Alternativ Tooltips aktivieren
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false, drawBorder: false },
+                            ticks: { color: '#9aa0a6', font: { size: 11 } }
+                        },
+                        y: {
+                            display: false, // Versteckt die Y-Achse
+                            min: 0,
+                            max: 15
+                        }
+                    },
+                    animation: { duration: 800 }
+                },
+                // Plugin, um die Werte (z.B. "10°") direkt über den Graphenpunkten zu zeichnen
+                plugins: [{
+                    afterDatasetsDraw: function(chart) {
+                        const ctx = chart.ctx;
+                        chart.data.datasets.forEach((dataset, i) => {
+                            const meta = chart.getDatasetMeta(i);
+                            meta.data.forEach((bar, index) => {
+                                const data = dataset.data[index];
+                                ctx.fillStyle = '#e8eaed';
+                                ctx.font = '12px Inter';
+                                ctx.textAlign = 'center';
+                                ctx.fillText(data + '°', bar.x, bar.y - 10);
+                            });
+                        });
+                    }
+                }]
+            });
+        }
+
+        // Initiiere das Widget
+        const urlParams = new URLSearchParams(window.location.search);
+        // window.weatherQuery für srcdoc-Injection (X-Frame-Options Workaround), URL-Params für direkten Aufruf
+        const query = window.weatherQuery || urlParams.get('q') || 'Schongau';
+        renderWeatherBox(query);
+    </script>
+</body>
+</html>
